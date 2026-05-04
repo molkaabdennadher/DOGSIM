@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Dog AI Test Client</title>
+</head>
+<body>
+
+<h1>Dog AI - Test Client</h1>
+
+<h2>1. Détection de race + recommandation adoption</h2>
+<input type="file" id="breedImageInput" accept="image/*">
+<button onclick="predictBreed()">Analyser la race</button>
+
+<p id="breedResult"></p>
+<p id="recommendationResult"></p>
+
+<hr>
+
+<h2>2. Détection peau / pelage</h2>
+<input type="file" id="skinImageInput" accept="image/*">
+<button onclick="predictSkin()">Analyser peau/pelage</button>
+
+<p id="skinResult"></p>
+
+<script>
+async function predictBreed() {
+    const fileInput = document.getElementById("breedImageInput");
+
+    if (!fileInput.files.length) {
+        alert("Choisis une image pour la race.");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", fileInput.files[0]);
+
+    document.getElementById("breedResult").innerText = "Analyse race en cours...";
+    document.getElementById("recommendationResult").innerText = "Génération de la recommandation...";
+
+    const response = await fetch("http://127.0.0.1:8000/predict-breed", {
+        method: "POST",
+        body: formData
+    });
+
+    const data = await response.json();
+
+    document.getElementById("breedResult").innerText =
+        "Race prédite : " + data.breed +
+        " | Confiance : " + (data.confidence * 100).toFixed(2) + "%";
+
+    document.getElementById("recommendationResult").innerText =
+        "Recommandation : " + data.recommendation;
+}
+
+async function predictSkin() {
+    const fileInput = document.getElementById("skinImageInput");
+
+    if (!fileInput.files.length) {
+        alert("Choisis une image pour peau/pelage.");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", fileInput.files[0]);
+
+    document.getElementById("skinResult").innerText = "Analyse peau/pelage en cours...";
+
+    const response = await fetch("http://127.0.0.1:8000/predict-skin", {
+        method: "POST",
+        body: formData
+    });
+
+    const data = await response.json();
+
+    document.getElementById("skinResult").innerText =
+        "État peau/pelage : " + data.skin +
+        " | Confiance : " + (data.confidence * 100).toFixed(2) + "%";
+}
+</script>
+
+</body>
+</html>

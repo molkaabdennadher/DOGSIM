@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+python-multipart
+requests
+tensorflow
+torch
+torchvision
+pillow
+numpy
