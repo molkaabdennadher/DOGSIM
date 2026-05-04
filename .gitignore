@@ -1,0 +1,9 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyd
+*.dll
+artifacts/
+site-packages/
+*.pt
