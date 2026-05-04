@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Happy Paws — AI Animal Shelter Platform</title>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0f1117;--surface:#1a1d27;--surface2:#22263a;--border:#2a2d3a;
+      --accent:#7c6fcd;--accent2:#5c9eff;--green:#22c55e;--orange:#f97316;
+      --red:#ef4444;--text:#e8e9f0;--muted:#7b7f96;--radius:16px;
+    }
+    html,body{height:100%;background:var(--bg);color:var(--text);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}
+    body{display:flex;flex-direction:column;align-items:center;justify-content:center;
+      min-height:100vh;padding:24px;}
+
+    /* header */
+    header{text-align:center;margin-bottom:48px;}
+    .brand{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:14px;}
+    .brand-icon{
+      width:56px;height:56px;border-radius:16px;
+      background:linear-gradient(135deg,var(--accent),var(--accent2));
+      display:flex;align-items:center;justify-content:center;font-size:1.8rem;
+    }
+    h1{font-size:2rem;font-weight:800;letter-spacing:-0.5px;}
+    h1 span{background:linear-gradient(135deg,var(--accent),var(--accent2));
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+    .subtitle{font-size:.95rem;color:var(--muted);margin-top:6px;}
+
+    /* cards grid */
+    .cards{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;max-width:900px;width:100%;}
+    @media(max-width:720px){.cards{grid-template-columns:1fr;}}
+
+    .card{
+      background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+      padding:28px 24px;display:flex;flex-direction:column;gap:14px;
+      text-decoration:none;color:inherit;
+      transition:border-color .2s,transform .2s,box-shadow .2s;cursor:pointer;
+    }
+    .card:hover{
+      border-color:var(--card-accent);transform:translateY(-4px);
+      box-shadow:0 12px 32px rgba(0,0,0,.4);
+    }
+    .card-icon{
+      width:52px;height:52px;border-radius:14px;
+      display:flex;align-items:center;justify-content:center;font-size:1.6rem;
+      background:var(--card-icon-bg);
+    }
+    .card-title{font-size:1.1rem;font-weight:700;}
+    .card-desc{font-size:.83rem;color:var(--muted);line-height:1.6;}
+    .card-tag{
+      align-self:flex-start;padding:3px 10px;border-radius:20px;
+      font-size:.7rem;font-weight:600;letter-spacing:.04em;
+      background:var(--card-tag-bg);color:var(--card-accent);
+    }
+
+    /* per-card theming */
+    .card-maya{--card-accent:var(--accent);--card-icon-bg:rgba(124,111,205,.15);--card-tag-bg:rgba(124,111,205,.15);}
+    .card-ali{--card-accent:var(--green);--card-icon-bg:rgba(34,197,94,.12);--card-tag-bg:rgba(34,197,94,.12);}
+    .card-agg{--card-accent:var(--red);--card-icon-bg:rgba(239,68,68,.12);--card-tag-bg:rgba(239,68,68,.12);}
+    .card-halim{--card-accent:#2ea043;--card-icon-bg:rgba(46,160,67,.12);--card-tag-bg:rgba(46,160,67,.12);}
+
+    footer{margin-top:40px;font-size:.72rem;color:var(--muted);}
+    .dot-sep{margin:0 8px;opacity:.4;}
+  </style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="brand-icon">🐾</div>
+    <h1>Happy <span>Paws</span></h1>
+  </div>
+  <p class="subtitle">AI-powered animal shelter management platform</p>
+</header>
+
+<div class="cards">
+
+  <!-- Maya -->
+  <a class="card card-maya" href="/maya">
+    <div class="card-icon">💬</div>
+    <div class="card-title">Maya — Pet Advisor</div>
+    <div class="card-desc">
+      AI adoption advisor that learns your lifestyle and matches you with the
+      perfect companion. Also searches shelter records from a lost-pet photo.
+    </div>
+    <span class="card-tag">ADOPTION · CHAT</span>
+  </a>
+
+  <!-- Ali -->
+  <a class="card card-ali" href="/ali">
+    <div class="card-icon">🏠</div>
+    <div class="card-title">Ali — Shelter Assignment</div>
+    <div class="card-desc">
+      Upload an Excel file of incoming dogs. Ali distributes them across
+      shelters respecting capacity, budget, and medical constraints, then
+      manages the waiting list in real time.
+    </div>
+    <span class="card-tag">ASSIGNMENT · SHELTERS</span>
+  </a>
+
+  <!-- Aggression -->
+  <a class="card card-agg" href="/aggression">
+    <div class="card-icon">🎥</div>
+    <div class="card-title">Aggression Detection</div>
+    <div class="card-desc">
+      Upload shelter surveillance video. YOLOv8-pose + ByteTrack detects
+      human-dog and dog-human aggression incidents and notifies the right
+      contacts automatically.
+    </div>
+    <span class="card-tag">SURVEILLANCE · AI</span>
+  </a>
+
+  <!-- Dr Halim -->
+  <a class="card card-halim" href="http://localhost:7001" target="_blank">
+    <div class="card-icon">🐾</div>
+    <div class="card-title">Dr Halim — AI Vet</div>
+    <div class="card-desc">
+      AI veterinarian that analyses your dog from a photo or video.
+      Detects breed, checks skin &amp; coat, assesses behaviour (rage risk),
+      and performs fecal matter colour analysis.
+    </div>
+    <span class="card-tag">BREED · SKIN · BEHAVIOUR · FÉCALE</span>
+  </a>
+
+</div>
+
+<footer>
+  Happy Paws Animal Shelter
+  <span class="dot-sep">·</span>
+  Powered by Groq AI + LangGraph
+  <span class="dot-sep">·</span>
+  <a href="/docs" style="color:var(--muted);">API docs</a>
+</footer>
+</body>
+</html>
