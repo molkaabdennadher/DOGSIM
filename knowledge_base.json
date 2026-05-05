@@ -1,0 +1,154 @@
+{
+  "Blood": {
+    "nom": "Sang dans les selles",
+    "maladies_probables": [
+      "Parvovirose",
+      "Hémorragie gastro-intestinale",
+      "Colite hémorragique",
+      "Intoxication"
+    ],
+    "urgence": "HAUTE",
+    "symptomes_associes": [
+      "Léthargie",
+      "Vomissements",
+      "Perte d'appétit",
+      "Douleurs abdominales"
+    ],
+    "traitement": [
+      "Consultation vétérinaire URGENTE",
+      "Réhydratation intraveineuse",
+      "Antibiotiques si infection bactérienne",
+      "Isoler le chien des autres animaux",
+      "Ne pas donner à manger pendant 24h"
+    ],
+    "prevention": [
+      "Vaccination antiparavovirose",
+      "Éviter les ordures et déchets",
+      "Surveillance régulière des selles"
+    ]
+  },
+  "Diarrhoea": {
+    "nom": "Diarrhée",
+    "maladies_probables": [
+      "Gastro-entérite",
+      "Giardia",
+      "Changement alimentaire brutal",
+      "Stress"
+    ],
+    "urgence": "MOYENNE",
+    "symptomes_associes": [
+      "Selles liquides fréquentes",
+      "Déshydratation légère",
+      "Ballonnements"
+    ],
+    "traitement": [
+      "Diète hydrique pendant 12-24h",
+      "Réhydratation orale",
+      "Alimentation légère (riz + poulet bouilli)",
+      "Probiotiques",
+      "Consulter si persiste plus de 48h"
+    ],
+    "prevention": [
+      "Changements alimentaires progressifs",
+      "Éviter les aliments humains",
+      "Déparasitage régulier"
+    ]
+  },
+  "LackOfWater": {
+    "nom": "Déshydratation",
+    "maladies_probables": [
+      "Déshydratation chronique",
+      "Insuffisance rénale",
+      "Diabète insipide"
+    ],
+    "urgence": "MOYENNE",
+    "symptomes_associes": [
+      "Selles très dures et sèches",
+      "Peau peu élastique",
+      "Yeux enfoncés",
+      "Léthargie"
+    ],
+    "traitement": [
+      "Accès permanent à l'eau fraîche",
+      "Alimentation humide (pâtée)",
+      "Réhydratation orale si sévère",
+      "Bilan rénal si persiste"
+    ],
+    "prevention": [
+      "Plusieurs points d'eau disponibles",
+      "Surveiller la consommation d'eau",
+      "Éviter l'exposition prolongée à la chaleur"
+    ]
+  },
+  "Normal": {
+    "nom": "Selles normales",
+    "maladies_probables": [],
+    "urgence": "AUCUNE",
+    "symptomes_associes": [],
+    "traitement": [
+      "Aucune intervention nécessaire",
+      "Continuer l'alimentation habituelle",
+      "Surveillance de routine"
+    ],
+    "prevention": [
+      "Alimentation équilibrée",
+      "Exercice régulier",
+      "Bilan vétérinaire annuel"
+    ]
+  },
+  "SoftPoop": {
+    "nom": "Selles molles",
+    "maladies_probables": [
+      "Alimentation inadaptée",
+      "Intolérance alimentaire",
+      "Stress léger",
+      "Début de gastro-entérite"
+    ],
+    "urgence": "FAIBLE",
+    "symptomes_associes": [
+      "Selles peu formées",
+      "Légère flatulence",
+      "Appétit conservé"
+    ],
+    "traitement": [
+      "Réduire les friandises et extras",
+      "Alimentation simple et digestible",
+      "Probiotiques",
+      "Surveiller l'évolution 48h"
+    ],
+    "prevention": [
+      "Alimentation régulière et adaptée",
+      "Éviter les changements brusques",
+      "Pas de restes de table"
+    ]
+  },
+  "Worms": {
+    "nom": "Présence de vers",
+    "maladies_probables": [
+      "Téniasis (vers plats)",
+      "Ascaridose (vers ronds)",
+      "Ankylostomose",
+      "Dipylidiose"
+    ],
+    "urgence": "MOYENNE",
+    "symptomes_associes": [
+      "Vers visibles dans les selles",
+      "Perte de poids",
+      "Ventre gonflé",
+      "Frottement du postérieur"
+    ],
+    "traitement": [
+      "Antiparasitaire oral (Fenbendazole / Praziquantel)",
+      "Traitement de tous les animaux du foyer",
+      "Nettoyage et désinfection de l'environnement",
+      "Consulter le vétérinaire pour le bon antiparasitaire",
+      "Traitement répété après 15 jours"
+    ],
+    "prevention": [
+      "Déparasitage régulier (tous les 3 mois)",
+      "Traitement antipuces (vecteur de ténia)",
+      "Éviter de manger des proies sauvages",
+      "Hygiène des zones de vie"
+    ]
+  }
+}
