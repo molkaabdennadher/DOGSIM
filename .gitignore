@@ -9,3 +9,4 @@ site-packages/
 *.pt
 .venv/
 .venv/
+.env
