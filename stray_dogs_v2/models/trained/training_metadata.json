@@ -1,0 +1,28 @@
+{
+  "rf_regressor": {
+    "mae": 175.03,
+    "rmse": 280.65,
+    "r2": 0.9319
+  },
+  "gb_regressor": {
+    "mae": 163.85,
+    "rmse": 266.62,
+    "r2": 0.9385
+  },
+  "rf_classifier": {
+    "accuracy": 0.8583
+  },
+  "feature_cols": [
+    "population",
+    "nb_menages",
+    "taille_menage",
+    "surface_km2",
+    "densite_pop",
+    "nb_food_poi",
+    "nb_bennes_org",
+    "dist_centre",
+    "zone_coeff"
+  ],
+  "target_reg": "nb_chiens",
+  "target_clf": "risk_class"
+}

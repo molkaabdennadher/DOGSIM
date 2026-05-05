@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🐕 Stray Dogs Tunisia — Test Client</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', sans-serif; background: #0f1117; color: #e2e8f0; min-height: 100vh; }
+
+header {
+  background: linear-gradient(135deg, #1a1f2e, #2d3748);
+  padding: 16px 28px; border-bottom: 1px solid #2d3748;
+  display: flex; align-items: center; gap: 12px;
+}
+header h1 { font-size: 1.3rem; font-weight: 700; }
+.badge { background: #4a5568; color: #a0aec0; font-size: .68rem; padding: 2px 7px; border-radius: 10px; margin-left: 6px; }
+.api-status { margin-left: auto; display: flex; align-items: center; gap: 6px; font-size: .78rem; color: #718096; }
+.dot { width: 8px; height: 8px; border-radius: 50%; }
+.dot-ok { background: #68d391; } .dot-err { background: #fc8181; } .dot-idle { background: #718096; }
+
+.layout { display: grid; grid-template-columns: 370px 1fr; height: calc(100vh - 57px); }
+
+/* ── Sidebar ── */
+.sidebar { background: #1a1f2e; border-right: 1px solid #2d3748; overflow-y: auto; padding: 16px; }
+
+.sec { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em;
+  color: #718096; margin: 18px 0 8px; }
+.sec:first-child { margin-top: 0; }
+
+.field { margin-bottom: 10px; }
+.field label { display: block; font-size: .78rem; color: #a0aec0; margin-bottom: 3px; }
+.field input, .field select, .field textarea {
+  width: 100%; background: #2d3748; border: 1px solid #4a5568;
+  color: #e2e8f0; border-radius: 6px; padding: 7px 9px; font-size: .83rem; outline: none; transition: border .15s;
+}
+.field input:focus, .field select:focus, .field textarea:focus { border-color: #4299e1; }
+.field textarea { font-family: monospace; font-size: .75rem; resize: vertical; min-height: 72px; }
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.hint { font-size: .68rem; color: #4a5568; margin-top: 3px; }
+
+/* ── Autocomplete ── */
+.ac-wrap { position: relative; flex: 1; }
+.ac-list { position: absolute; top: 100%; left: 0; right: 0; background: #2d3748; border: 1px solid #4299e1;
+  border-radius: 0 0 6px 6px; z-index: 100; max-height: 200px; overflow-y: auto; display: none; }
+.ac-item { padding: 7px 10px; cursor: pointer; font-size: .8rem; border-bottom: 1px solid #4a5568; }
+.ac-item:last-child { border-bottom: none; }
+.ac-item:hover, .ac-item.ac-active { background: #4299e1; color: #fff; }
+.ac-item .ac-sub { font-size: .68rem; color: #a0aec0; }
+.ac-item:hover .ac-sub, .ac-item.ac-active .ac-sub { color: #bee3f8; }
+
+/* ── OSM auto-fill ── */
+.osm-row { display: flex; gap: 6px; align-items: flex-start; }
+.btn-osm {
+  padding: 7px 12px; background: #2d4a6e; border: 1px solid #4299e1;
+  color: #4299e1; border-radius: 6px; font-size: .78rem; cursor: pointer; white-space: nowrap;
+  transition: all .15s; margin-top: 0;
+}
+.btn-osm:hover { background: #4299e1; color: #fff; }
+.btn-osm:disabled { opacity: .5; cursor: not-allowed; }
+
+.osm-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(104,211,145,.1); border: 1px solid rgba(104,211,145,.3);
+  color: #68d391; font-size: .7rem; padding: 3px 8px; border-radius: 10px; margin-bottom: 8px;
+}
+
+/* ── PNG upload ── */
+.png-drop {
+  border: 2px dashed #4a5568; border-radius: 8px; padding: 14px;
+  text-align: center; cursor: pointer; transition: all .2s; margin-bottom: 8px;
+}
+.png-drop:hover, .png-drop.drag { border-color: #4299e1; background: rgba(66,153,225,.05); }
+.png-drop p { font-size: .78rem; color: #718096; }
+.png-drop input { display: none; }
+.png-name { font-size: .72rem; color: #68d391; margin-top: 4px; }
+
+/* ── Tabs endpoint ── */
+.tabs { display: flex; gap: 4px; margin-bottom: 10px; }
+.tab { flex:1; padding:6px; border:1px solid #4a5568; border-radius:6px; background:#2d3748;
+  color:#a0aec0; font-size:.75rem; cursor:pointer; text-align:center; transition:all .15s; }
+.tab.active { background:#4299e1; border-color:#4299e1; color:#fff; }
+
+.btn-run {
+  width: 100%; padding: 11px; margin-top: 14px;
+  background: linear-gradient(135deg, #3182ce, #2b6cb0);
+  color: #fff; border: none; border-radius: 8px; font-size: .9rem; font-weight: 600;
+  cursor: pointer; transition: all .2s; display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.btn-run:hover { background: linear-gradient(135deg, #4299e1, #3182ce); transform: translateY(-1px); }
+.btn-run:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+.btn-health { width:100%; padding:7px; margin-bottom:12px; background:#2d3748; border:1px solid #4a5568;
+  color:#a0aec0; border-radius:6px; font-size:.77rem; cursor:pointer; transition:all .15s; }
+.btn-health:hover { border-color:#68d391; color:#68d391; }
+
+/* ── Main ── */
+.main { overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 18px; }
+
+.empty-state { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  color:#4a5568; gap:10px; }
+.empty-state .ico { font-size:2.8rem; }
+
+/* ── Solution cards ── */
+.sol-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.sol-card { background:#1a1f2e; border:1px solid #2d3748; border-radius:10px; padding:16px; position:relative; overflow:hidden; }
+.sol-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+.s1::before { background: linear-gradient(90deg,#f6ad55,#ed8936); }
+.s2::before { background: linear-gradient(90deg,#4299e1,#3182ce); }
+.s3::before { background: linear-gradient(90deg,#68d391,#48bb78); }
+.sol-hd { display:flex; align-items:center; gap:7px; margin-bottom:12px; }
+.sol-tag { font-size:.65rem; font-weight:700; padding:2px 7px; border-radius:10px; }
+.s1 .sol-tag { background:rgba(246,173,85,.15); color:#f6ad55; }
+.s2 .sol-tag { background:rgba(66,153,225,.15); color:#4299e1; }
+.s3 .sol-tag { background:rgba(104,211,145,.15); color:#68d391; }
+.sol-ttl { font-size:.82rem; font-weight:600; }
+.mv { font-size:1.7rem; font-weight:700; line-height:1.1; }
+.ml { font-size:.68rem; color:#718096; margin-top:1px; margin-bottom:8px; }
+.risk-pill { display:inline-block; padding:3px 11px; border-radius:20px; font-size:.77rem; font-weight:700; margin-bottom:8px; }
+.stat { display:flex; justify-content:space-between; align-items:center; padding:4px 0;
+  border-bottom:1px solid #2d3748; font-size:.77rem; }
+.stat:last-child { border-bottom:none; }
+.sk { color:#a0aec0; } .sv { font-weight:600; }
+.cbar { height:3px; background:#2d3748; border-radius:2px; margin:6px 0; }
+.cfill { height:100%; border-radius:2px; background:linear-gradient(90deg,#f6ad55,#ed8936); transition:width .5s; }
+.fz-list { display:flex; flex-direction:column; gap:5px; max-height:150px; overflow-y:auto; }
+.fz-item { background:#2d3748; border-radius:5px; padding:5px 8px; display:flex; justify-content:space-between; font-size:.75rem; }
+.fz-sc { color:#68d391; font-weight:700; }
+
+/* ── Map ── */
+.map-section { background:#1a1f2e; border:1px solid #2d3748; border-radius:10px; overflow:hidden; }
+.map-hd { padding:12px 16px; border-bottom:1px solid #2d3748; display:flex; align-items:center; justify-content:space-between; }
+.map-hd h3 { font-size:.82rem; font-weight:600; }
+#map { height:360px; }
+.map-leg { padding:8px 16px; display:flex; gap:14px; flex-wrap:wrap; border-top:1px solid #2d3748; }
+.leg-it { display:flex; align-items:center; gap:5px; font-size:.72rem; color:#a0aec0; }
+.leg-dot { width:9px; height:9px; border-radius:50%; }
+
+/* ── Raw JSON ── */
+.raw-sec { background:#1a1f2e; border:1px solid #2d3748; border-radius:10px; overflow:hidden; }
+.raw-hd { padding:10px 16px; border-bottom:1px solid #2d3748; display:flex; align-items:center; justify-content:space-between; cursor:pointer; }
+.raw-hd h3 { font-size:.77rem; font-weight:600; color:#718096; }
+#raw-body { display:none; }
+pre { background:#0f1117; padding:14px; overflow:auto; font-size:.72rem; color:#68d391; max-height:280px; line-height:1.5; }
+
+.spinner { width:16px; height:16px; border:2px solid rgba(255,255,255,.3); border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.err-box { background:rgba(252,129,129,.08); border:1px solid rgba(252,129,129,.3); border-radius:8px; padding:10px 14px; color:#fc8181; font-size:.8rem; }
+.toast { position:fixed; bottom:20px; right:20px; background:#2d3748; border:1px solid #4a5568; border-radius:8px; padding:10px 16px; font-size:.8rem; color:#e2e8f0; z-index:9999; transition:opacity .3s; }
+.poi-summary { display:flex; gap:8px; flex-wrap:wrap; margin-top:6px; }
+.poi-chip { background:#2d3748; border-radius:12px; padding:3px 9px; font-size:.7rem; color:#a0aec0; }
+</style>
+</head>
+<body>
+
+<header>
+  <span>🐕</span>
+  <h1>Stray Dogs Tunisia <span class="badge">Test Client</span></h1>
+  <div class="api-status">
+    <span class="dot dot-idle" id="api-dot"></span>
+    <span id="api-txt">API non vérifiée</span>
+  </div>
+</header>
+
+<div class="layout">
+
+<!-- ── Sidebar ───────────────────────────────── -->
+<aside class="sidebar">
+
+  <button class="btn-health" onclick="checkHealth()">⚡ Vérifier API (localhost:5000)</button>
+
+  <div class="sec">Endpoint</div>
+  <div class="tabs">
+    <div class="tab active" onclick="setEp('pipeline',this)">/pipeline</div>
+    <div class="tab" onclick="setEp('solution1',this)">/solution1</div>
+  </div>
+
+  <!-- ── Quartier + RGPH + OSM ── -->
+  <div class="sec">Quartier</div>
+  <div class="osm-row">
+    <div class="ac-wrap">
+      <input id="district_name" value="Chotrana" placeholder="Ex: Chotrana, La Marsa, Ariana..."
+        oninput="onDistrictInput(this.value)" onkeydown="onDistrictKey(event)" autocomplete="off"/>
+      <div class="ac-list" id="ac-list"></div>
+    </div>
+    <button class="btn-osm" id="btn-osm" onclick="fetchOSM()" title="Récupérer bbox + POI depuis OpenStreetMap">
+      📡 OSM
+    </button>
+  </div>
+  <p class="hint" style="margin-top:4px">Tape un nom → sélectionne le secteur RGPH pour auto-remplir la population · clique 📡 OSM pour la carte</p>
+  <div id="rgph-badge" style="display:none;margin:6px 0">
+    <span class="osm-badge" style="background:rgba(159,122,234,.1);border-color:rgba(159,122,234,.3);color:#9f7aea">
+      📊 Données RGPH 2014
+    </span>
+    <div class="poi-summary" id="rgph-summary"></div>
+  </div>
+  <div id="osm-badge" style="display:none;margin-top:6px">
+    <span class="osm-badge">✓ Données OSM chargées</span>
+    <div class="poi-summary" id="poi-summary"></div>
+  </div>
+
+  <!-- ── Upload PNG ── -->
+  <div class="sec">Carte PNG (optionnel)</div>
+  <div class="png-drop" id="png-drop" onclick="document.getElementById('png-input').click()"
+       ondragover="event.preventDefault();this.classList.add('drag')"
+       ondragleave="this.classList.remove('drag')"
+       ondrop="handleDrop(event)">
+    <p>📎 Glisse ou clique pour uploader un PNG de carte</p>
+    <p style="font-size:.66rem;margin-top:3px">🔴 Bennes org · 🔵 Bennes plas · 🟠 Restaurants · 🟢 Parcs · 🟡 Écoles</p>
+    <input type="file" id="png-input" accept=".png,.jpg" onchange="handlePNG(event)"/>
+    <div class="png-name" id="png-name"></div>
+  </div>
+
+  <div class="sec">Données démographiques</div>
+  <div class="g2">
+    <div class="field"><label>Population</label><input id="population" type="number" value="10594"/></div>
+    <div class="field"><label>Nb ménages</label><input id="nb_menages" type="number" value="2650"/></div>
+    <div class="field"><label>Surface (km²)</label><input id="surface_km2" type="number" step="0.1" value="4.2"/></div>
+    <div class="field"><label>Type de zone</label>
+      <select id="zone_type">
+        <option value="residential" selected>Résidentiel</option>
+        <option value="commercial">Commercial</option>
+        <option value="retail">Retail</option>
+        <option value="industrial">Industriel</option>
+        <option value="park">Parc</option>
+        <option value="beach">Balnéaire</option>
+        <option value="market">Marché</option>
+        <option value="restaurant_zone">Zone restaurants</option>
+        <option value="mixed">Mixte</option>
+        <option value="periphery">Périphérie</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="sec" id="bbox-sec">BBox (lat/lon)</div>
+  <div class="g2" id="bbox-fields">
+    <div class="field"><label>Lat min</label><input id="lat_min" type="number" step="0.0001" value="36.877"/></div>
+    <div class="field"><label>Lat max</label><input id="lat_max" type="number" step="0.0001" value="36.914"/></div>
+    <div class="field"><label>Lon min</label><input id="lon_min" type="number" step="0.0001" value="10.191"/></div>
+    <div class="field"><label>Lon max</label><input id="lon_max" type="number" step="0.0001" value="10.246"/></div>
+  </div>
+
+  <div class="sec">POI manuels</div>
+  <div class="g2">
+    <div class="field"><label>Food POI <span id="food-count" style="color:#68d391"></span></label>
+      <input id="nb_food_poi" type="number" value="0"/></div>
+    <div class="field"><label>Bennes org <span id="bin-count" style="color:#68d391"></span></label>
+      <input id="nb_bins_org" type="number" value="0"/></div>
+  </div>
+
+  <div class="sec">Bennes (JSON)</div>
+  <div class="field">
+    <textarea id="bins_json" placeholder='[{"lat":36.88,"lon":10.20,"type":"organique"}]'>[]</textarea>
+    <p class="hint">Format : [{lat, lon, type}] — auto-rempli si OSM ou PNG chargé</p>
+  </div>
+
+  <div class="sec">Feeding zones</div>
+  <div class="field"><label>Nombre de zones souhaitées</label>
+    <input id="n_zones" type="number" value="7"/></div>
+
+  <!-- Preview bennes -->
+  <div id="benne-preview" style="background:#0d1117;border:1px solid #2d3748;border-radius:7px;
+       padding:9px 11px;margin-top:10px;font-size:.72rem;color:#718096;display:none">
+    <div style="font-size:.62rem;color:#4a5568;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px">
+      Estimation rapide S2
+    </div>
+    <div id="preview-formula" style="font-family:monospace;line-height:1.7;color:#a0aec0"></div>
+    <div style="margin-top:5px;display:flex;align-items:center;gap:6px">
+      <span style="color:#718096;font-size:.65rem">Recommandation :</span>
+      <span id="preview-nb" style="font-size:1.2rem;font-weight:700;color:#4299e1">—</span>
+      <span style="color:#718096;font-size:.65rem">bennes 700L</span>
+    </div>
+  </div>
+
+  <button class="btn-run" id="btn-run" onclick="runTest()">
+    <span id="btn-icon">▶</span>
+    <span id="btn-label">Lancer le test</span>
+  </button>
+
+</aside>
+
+<!-- ── Main ─────────────────────────────────── -->
+<main class="main" id="main">
+  <div class="empty-state" id="empty">
+    <div class="ico">🐕</div>
+    <p>Lance un test pour voir les résultats</p>
+    <p style="font-size:.75rem">Tape un quartier → clique <strong style="color:#4299e1">📡 OSM</strong> → <strong style="color:#3182ce">▶ Lancer</strong></p>
+  </div>
+</main>
+
+</div>
+
+<script>
+let currentEp   = 'pipeline';
+let osmData     = null;
+let pngFile     = null;
+let acResults   = [];
+let acIdx       = -1;
+let rgphSelected = null;
+
+// ── Helpers ──────────────────────────────────────────────────
+function v(id) { return document.getElementById(id)?.value ?? ''; }
+function set(id, val) { const el = document.getElementById(id); if(el) el.value = val; }
+function show(id, v) { const el = document.getElementById(id); if(el) el.style.display = v ? '' : 'none'; }
+function toast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity='0'; setTimeout(() => t.remove(), 300); }, 2500);
+}
+
+function setEp(ep, el) {
+  currentEp = ep;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  show('bbox-sec',   ep === 'pipeline');
+  show('bbox-fields', ep === 'pipeline');
+}
+
+// ── Autocomplete RGPH ────────────────────────────────────────
+let acTimer = null;
+async function onDistrictInput(val) {
+  clearTimeout(acTimer);
+  const list = document.getElementById('ac-list');
+  if (val.length < 2) { list.style.display = 'none'; return; }
+  acTimer = setTimeout(async () => {
+    try {
+      const r = await fetch(`http://localhost:5000/api/rgph?q=${encodeURIComponent(val)}`);
+      const d = await r.json();
+      if (!d.ok || !d.results?.length) { list.style.display = 'none'; return; }
+      acResults = d.results;
+      acIdx = -1;
+      list.innerHTML = d.results.map((r, i) => `
+        <div class="ac-item" data-i="${i}" onmousedown="selectRGPH(${i})">
+          <strong>${r.nom}</strong>
+          <span class="ac-sub"> · ${r.delegation}, ${r.gouvernorat}</span><br>
+          <span class="ac-sub">Pop. ${r.population.toLocaleString()} · ${r.nb_menages.toLocaleString()} ménages</span>
+        </div>`).join('');
+      list.style.display = 'block';
+    } catch {}
+  }, 250);
+}
+
+function onDistrictKey(e) {
+  const list = document.getElementById('ac-list');
+  const items = list.querySelectorAll('.ac-item');
+  if (e.key === 'ArrowDown') { acIdx = Math.min(acIdx+1, items.length-1); highlightAC(items); e.preventDefault(); }
+  else if (e.key === 'ArrowUp') { acIdx = Math.max(acIdx-1, 0); highlightAC(items); e.preventDefault(); }
+  else if (e.key === 'Enter' && acIdx >= 0) { selectRGPH(acIdx); e.preventDefault(); }
+  else if (e.key === 'Escape') { list.style.display = 'none'; }
+}
+
+function highlightAC(items) {
+  items.forEach((el, i) => el.classList.toggle('ac-active', i === acIdx));
+  if (acIdx >= 0) items[acIdx]?.scrollIntoView({ block: 'nearest' });
+}
+
+function selectRGPH(i) {
+  const r = acResults[i];
+  if (!r) return;
+  rgphSelected = r;
+
+  // Remplir le formulaire
+  set('district_name', r.nom);
+  set('population',    r.population);
+  set('nb_menages',    r.nb_menages);
+
+  // Taille ménage → surface estimée (3.5 pers/ménage ~100m² → ~0.035 km² par 1000 hab)
+  const surfEst = Math.round(r.population / 4000 * 10) / 10 || 1.0;
+  set('surface_km2', surfEst);
+
+  // Fermer liste
+  document.getElementById('ac-list').style.display = 'none';
+
+  // Badge RGPH
+  show('rgph-badge', true);
+  document.getElementById('rgph-summary').innerHTML = `
+    <span class="poi-chip">👥 ${r.population.toLocaleString()} habitants</span>
+    <span class="poi-chip">🏠 ${r.nb_menages.toLocaleString()} ménages</span>
+    <span class="poi-chip">🏘 ${r.nb_logements.toLocaleString()} logements</span>
+    <span class="poi-chip">👨‍👩‍👧 ${r.taille_menage} pers/ménage</span>
+    <span class="poi-chip">📍 ${r.delegation}</span>`;
+
+  toast(`✓ RGPH 2014 : ${r.nom} (${r.population.toLocaleString()} hab.)`);
+}
+
+// Fermer autocomplete si clic ailleurs
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.ac-wrap')) {
+    const list = document.getElementById('ac-list');
+    if (list) list.style.display = 'none';
+  }
+});
+
+// ── Health check ─────────────────────────────────────────────
+async function checkHealth() {
+  const dot = document.getElementById('api-dot');
+  const txt = document.getElementById('api-txt');
+  dot.className = 'dot dot-idle'; txt.textContent = 'Vérification…';
+  try {
+    const r = await fetch('http://localhost:5000/api/health');
+    const d = await r.json();
+    dot.className = 'dot dot-ok';
+    txt.textContent = `API OK · modèles ${d.models_loaded ? '✓' : '⚠ manquants'}`;
+  } catch {
+    dot.className = 'dot dot-err';
+    txt.textContent = 'API non joignable';
+  }
+}
+
+// ── OSM auto-fill ─────────────────────────────────────────────
+async function fetchOSM() {
+  const btn      = document.getElementById('btn-osm');
+  const district = v('district_name').trim();
+  if (!district) { toast('Saisis un nom de quartier'); return; }
+
+  btn.disabled = true; btn.textContent = '⏳';
+  try {
+    const r = await fetch(`http://localhost:5000/api/osm_data?district=${encodeURIComponent(district)}`);
+    const d = await r.json();
+
+    if (!d.ok) { toast('❌ ' + d.error); return; }
+
+    // Remplir bbox
+    set('lat_min', d.bbox.lat_min.toFixed(5));
+    set('lat_max', d.bbox.lat_max.toFixed(5));
+    set('lon_min', d.bbox.lon_min.toFixed(5));
+    set('lon_max', d.bbox.lon_max.toFixed(5));
+
+    // Remplir surface
+    set('surface_km2', d.surface_km2);
+
+    // Remplir food_poi count
+    set('nb_food_poi', d.nb_food_poi);
+
+    // Stocker pour le pipeline
+    osmData = d;
+
+    // Badge & summary
+    show('osm-badge', true);
+    document.getElementById('poi-summary').innerHTML = `
+      <span class="poi-chip">🍔 ${d.nb_food_poi} food</span>
+      <span class="poi-chip">🏫 ${d.nb_schools} écoles</span>
+      <span class="poi-chip">🌳 ${d.nb_parks} parcs</span>
+      <span class="poi-chip">📐 ${d.surface_km2} km²</span>`;
+
+    document.getElementById('food-count').textContent = `(OSM: ${d.nb_food_poi})`;
+    toast(`✓ Données OSM chargées pour ${district}`);
+  } catch(e) {
+    toast('❌ Erreur OSM : ' + e.message);
+  }
+  btn.disabled = false; btn.textContent = '📡 OSM';
+}
+
+// ── PNG upload ────────────────────────────────────────────────
+function handlePNG(event) {
+  const file = event.target.files[0];
+  if (file) processPNG(file);
+}
+function handleDrop(event) {
+  event.preventDefault();
+  document.getElementById('png-drop').classList.remove('drag');
+  const file = event.dataTransfer.files[0];
+  if (file) processPNG(file);
+}
+
+async function processPNG(file) {
+  pngFile = file;
+  document.getElementById('png-name').textContent = `📎 ${file.name}`;
+
+  // Vérifier qu'on a une bbox
+  const bbox = getBbox();
+  if (!bbox.lat_min) { toast('⚠ Remplis la bbox avant d\'uploader le PNG'); return; }
+
+  toast('⏳ Analyse du PNG en cours…');
+  try {
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('bbox', JSON.stringify(bbox));
+
+    const r = await fetch('http://localhost:5000/api/parse_png', { method: 'POST', body: fd });
+    const d = await r.json();
+    if (!d.ok) { toast('❌ ' + d.error); return; }
+
+    // Remplir bins JSON
+    document.getElementById('bins_json').value = JSON.stringify(d.bins, null, 2);
+    set('nb_bins_org', d.counts.bins_org);
+    set('nb_food_poi', d.counts.food_poi);
+    document.getElementById('bin-count').textContent = `(PNG: ${d.counts.bins_org})`;
+    document.getElementById('food-count').textContent = `(PNG: ${d.counts.food_poi})`;
+
+    // Stocker les POI du PNG
+    if (!osmData) osmData = {};
+    osmData.food_poi = d.food_poi;
+    osmData.schools  = d.schools;
+    osmData.parks    = d.parks;
+
+    toast(`✓ PNG analysé : ${d.counts.bins_org} bennes, ${d.counts.food_poi} restaurants, ${d.counts.schools} écoles`);
+  } catch(e) {
+    toast('❌ Erreur PNG : ' + e.message);
+  }
+}
+
+// ── Build request body ────────────────────────────────────────
+function getBbox() {
+  return {
+    lat_min: parseFloat(v('lat_min')),
+    lat_max: parseFloat(v('lat_max')),
+    lon_min: parseFloat(v('lon_min')),
+    lon_max: parseFloat(v('lon_max')),
+  };
+}
+
+function buildBody() {
+  let bins = [];
+  try { bins = JSON.parse(document.getElementById('bins_json').value.trim() || '[]'); } catch {}
+
+  const body = {
+    district_name: v('district_name'),
+    population:    +v('population'),
+    nb_menages:    +v('nb_menages'),
+    surface_km2:   +v('surface_km2'),
+    zone_type:     v('zone_type'),
+    nb_food_poi:   +v('nb_food_poi'),
+    nb_bins_org:   +v('nb_bins_org'),
+    dist_centre:   0.5,
+    n_zones:       +v('n_zones'),
+    bbox:          getBbox(),
+    bins:          bins,
+  };
+
+  // Ajouter les POI OSM/PNG si disponibles
+  if (osmData) {
+    if (osmData.food_poi?.length) body.food_poi = osmData.food_poi;
+    if (osmData.schools?.length)  body.schools  = osmData.schools;
+    if (osmData.parks?.length)    body.parks    = osmData.parks;
+  }
+
+  return body;
+}
+
+// ── Run test ──────────────────────────────────────────────────
+async function runTest() {
+  const btn = document.getElementById('btn-run');
+  document.getElementById('btn-icon').innerHTML = '<div class="spinner"></div>';
+  document.getElementById('btn-label').textContent = 'Calcul…';
+  btn.disabled = true;
+
+  try {
+    const body = buildBody();
+    const r    = await fetch(`http://localhost:5000/api/${currentEp}`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body),
+    });
+    const data = await r.json();
+    if (!data.ok) { showErr(data.error, data.trace); }
+    else if (currentEp === 'pipeline') renderPipeline(data);
+    else renderS1(data.result);
+  } catch(e) { showErr(e.message); }
+
+  btn.disabled = false;
+  document.getElementById('btn-icon').textContent = '▶';
+  document.getElementById('btn-label').textContent = 'Lancer le test';
+}
+
+// ── Error ────────────────────────────────────────────────────
+function showErr(msg, trace) {
+  document.getElementById('main').innerHTML = `
+    <div class="err-box"><strong>Erreur</strong><br>${msg}
+    ${trace ? `<pre style="color:#fc8181;background:transparent;padding:0;font-size:.68rem;margin-top:6px">${trace}</pre>` : ''}
+    </div>`;
+}
+
+// ── Contribution bar helper ───────────────────────────────────
+function makeContribBar(label, val, total, color, emoji) {
+  if (val === undefined || val === null) return '';
+  const pct = total > 0 ? Math.min(100, Math.round(val / total * 100)) : 0;
+  return `
+    <div style="margin:4px 0">
+      <div style="display:flex;justify-content:space-between;font-size:.65rem;color:#a0aec0;margin-bottom:2px">
+        <span>${emoji} ${label}</span>
+        <span style="color:${color};font-weight:600">+${val} bennes (${pct}%)</span>
+      </div>
+      <div style="height:4px;background:#2d3748;border-radius:2px">
+        <div style="width:${pct}%;height:100%;background:${color};border-radius:2px;transition:width .6s"></div>
+      </div>
+    </div>`;
+}
+
+// ── Render pipeline ───────────────────────────────────────────
+function renderPipeline(data) {
+  const {s1, s2, s3, meta} = data;
+  const fz     = s3.feeding_zones || [];
+  const st     = s2.stats || {};
+  const rc     = s1.risk_color || '#a0aec0';
+  const bins   = s2.recommended_bins || [];
+  const contrib = st.contributions || {};
+  const totalBrut = (contrib.base_population||0) + (contrib.restaurants||0)
+                  + (contrib.cafes||0) + (contrib.bonus_chiens||0) || 1;
+
+  // Source breakdown for bins
+  const srcCounts = bins.reduce((acc, b) => {
+    const s = b.source || 'unknown';
+    acc[s] = (acc[s] || 0) + 1;
+    return acc;
+  }, {});
+  const srcBadges = Object.entries(srcCounts).map(([s, n]) => {
+    const color = s === 'osm_intersection' ? '#4299e1'
+                : s === 'near_food_poi'    ? '#f6ad55'
+                : '#718096';
+    return `<span style="background:${color}22;color:${color};border:1px solid ${color}44;
+      font-size:.62rem;padding:1px 6px;border-radius:8px;margin-right:3px">${n}×${s.replace('_',' ')}</span>`;
+  }).join('');
+
+  const osmSrc = osmData ? `<div class="osm-badge" style="display:inline-flex;margin-bottom:10px">✓ POI réels OSM</div>` : '';
+
+  document.getElementById('main').innerHTML = `
+    ${osmSrc}
+    <div class="sol-grid">
+
+      <div class="sol-card s1">
+        <div class="sol-hd"><span class="sol-tag">S1</span><span class="sol-ttl">Densité canine</span></div>
+        <div class="mv" style="color:#f6ad55">${s1.nb_chiens}</div>
+        <div class="ml">chiens estimés</div>
+        <span class="risk-pill" style="background:${rc}22;color:${rc}">Risque ${s1.risk_label}</span>
+        <div class="cbar"><div class="cfill" style="width:${(s1.confidence*100).toFixed(0)}%"></div></div>
+        <div class="stat"><span class="sk">Confiance</span><span class="sv">${(s1.confidence*100).toFixed(0)}%</span></div>
+        <div class="stat"><span class="sk">Source</span><span class="sv" style="font-size:.68rem">${s1.source}</span></div>
+        <div class="stat"><span class="sk">Ratio</span><span class="sv">${s1.details?.ratio_chien_habitant||'—'}</span></div>
+        <div class="stat"><span class="sk">Coeff zone</span><span class="sv">${s1.details?.zone_coeff}</span></div>
+        <div class="stat"><span class="sk">Contrib. food</span><span class="sv">+${s1.details?.contribution_food_poi}</span></div>
+        <div class="stat"><span class="sk">Contrib. bennes</span><span class="sv">+${s1.details?.contribution_bennes}</span></div>
+      </div>
+
+      <div class="sol-card s2">
+        <div class="sol-hd"><span class="sol-tag">S2</span><span class="sol-ttl">Bennes recommandées</span></div>
+        <div style="display:flex;align-items:flex-end;gap:10px;margin-bottom:2px">
+          <div class="mv" style="color:#4299e1">${st.nb_recommande ?? '—'}</div>
+          ${st.bennes_placees !== undefined ? `<div style="font-size:.75rem;color:#68d391;margin-bottom:6px">✓ ${st.bennes_placees} placées</div>` : ''}
+        </div>
+        <div class="ml">bennes organiques 700L recommandées</div>
+        <div class="stat"><span class="sk">Intersections OSM</span><span class="sv">${st.intersections_osm ?? '—'}</span></div>
+        <div class="stat"><span class="sk">Restaurants détectés</span><span class="sv">${st.nb_restaurants ?? '—'}</span></div>
+        <div class="stat"><span class="sk">Cafés détectés</span><span class="sv">${st.nb_cafes ?? '—'}</span></div>
+        <div class="stat"><span class="sk">Points noirs</span><span class="sv" style="color:#fc8181">${st.black_spots ?? '—'}</span></div>
+        ${Object.keys(contrib).length ? `
+        <div style="margin-top:8px;padding:7px 8px;background:#0d1117;border-radius:6px">
+          <div style="font-size:.62rem;color:#718096;margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em">Décomposition de la formule</div>
+          ${makeContribBar('Population ÷ 150', contrib.base_population, totalBrut, '#4299e1', '👥')}
+          ${makeContribBar('Restaurants × 0.25', contrib.restaurants, totalBrut, '#f6ad55', '🍔')}
+          ${makeContribBar('Cafés × 0.12', contrib.cafes, totalBrut, '#9f7aea', '☕')}
+          ${makeContribBar('Bonus chiens', contrib.bonus_chiens, totalBrut, '#fc8181', '🐕')}
+        </div>` : ''}
+        ${srcBadges ? `<div style="margin-top:7px">${srcBadges}</div>` : ''}
+        <button onclick="loadS2Map()" style="margin-top:10px;width:100%;padding:7px;background:#2b6cb0;border:none;color:#fff;border-radius:6px;cursor:pointer;font-size:.78rem">🗺 Voir carte temps réel</button>
+      </div>
+
+      <div class="sol-card s3">
+        <div class="sol-hd"><span class="sol-tag">S3</span><span class="sol-ttl">Feeding zones</span></div>
+        <div class="mv" style="color:#68d391">${fz.length}</div>
+        <div class="ml">zones recommandées</div>
+        <div class="fz-list">
+          ${fz.map(z=>`
+            <div class="fz-item">
+              <span>${z.zone_id||'—'} · ${(+z.lat).toFixed(4)}, ${(+z.lon).toFixed(4)}</span>
+              <span class="fz-sc">${z.score_pct}%</span>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <div class="map-section">
+      <div class="map-hd">
+        <h3>🗺 Carte — ${meta.district}</h3>
+        <span style="font-size:.72rem;color:#718096">Pop. ${(meta.population||0).toLocaleString()}</span>
+      </div>
+      <div id="map"></div>
+      <div class="map-leg">
+        <div class="leg-it"><div class="leg-dot" style="background:#fc8181"></div>Point noir</div>
+        <div class="leg-it"><div class="leg-dot" style="background:#4299e1"></div>Benne (coin de rue OSM)</div>
+        <div class="leg-it"><div class="leg-dot" style="background:#f6ad55"></div>Benne (près food POI)</div>
+        <div class="leg-it"><div class="leg-dot" style="background:#68d391"></div>Feeding zone</div>
+        ${osmData?.food_poi?.length ? '<div class="leg-it"><div class="leg-dot" style="background:#ed8936;opacity:.6"></div>Restaurant / Café</div>' : ''}
+        ${osmData?.schools?.length  ? '<div class="leg-it"><div class="leg-dot" style="background:#9f7aea"></div>École</div>' : ''}
+        ${osmData?.parks?.length    ? '<div class="leg-it"><div class="leg-dot" style="background:#48bb78"></div>Parc</div>' : ''}
+      </div>
+    </div>
+
+    <div class="raw-sec">
+      <div class="raw-hd" onclick="toggleRaw()">
+        <h3>📋 Réponse JSON brute</h3>
+        <span id="raw-tog" style="color:#4299e1;font-size:.72rem">Afficher ▾</span>
+      </div>
+      <div id="raw-body"><pre id="raw-json"></pre></div>
+    </div>`;
+
+  document.getElementById('raw-json').textContent = JSON.stringify(data, null, 2);
+  _lastPipelineData = data;
+  initMap(data);
+}
+
+// ── Init Leaflet map ──────────────────────────────────────────
+function initMap(data) {
+  const bbox = data.meta.bbox;
+  const clat = (bbox.lat_min + bbox.lat_max) / 2;
+  const clon = (bbox.lon_min + bbox.lon_max) / 2;
+
+  const map = L.map('map').setView([clat, clon], 15);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap', maxZoom: 19,
+  }).addTo(map);
+
+  L.rectangle([[bbox.lat_min,bbox.lon_min],[bbox.lat_max,bbox.lon_max]], {
+    color:'#4a5568', weight:1, fill:false, dashArray:'4 4',
+  }).addTo(map);
+
+  // Points noirs
+  (data.s2.black_spots||[]).forEach(b => {
+    L.circleMarker([b.lat,b.lon], {radius:8,color:'#fc8181',fillColor:'#fc8181',fillOpacity:.5,weight:2})
+      .addTo(map).bindPopup(`⚠ Point noir<br>Densité: ${(b.dog_density||0).toFixed(0)}`);
+  });
+
+  // Bennes recommandées — couleur selon la source
+  const bins = data.s2.recommended_bins || [];
+  const maxScore = bins.length ? (bins[0]?.score || 1) : 1;
+  bins.forEach((b, i) => {
+    const scorePct = b.score ? Math.min(100, Math.round(b.score / maxScore * 100)) : 0;
+    // Couleur selon la source du candidat
+    const color = b.source === 'osm_intersection' ? '#4299e1'
+                : b.source === 'near_food_poi'    ? '#f6ad55'
+                : '#718096';  // zone_coverage ou fallback
+    const sourceLabel = b.source === 'osm_intersection' ? '📍 Coin de rue OSM'
+                      : b.source === 'near_food_poi'    ? '🍔 Près d\'un food POI'
+                      : '📐 Couverture zone';
+    L.circleMarker([b.lat, b.lon], {
+      radius: 9, color, fillColor: color, fillOpacity: .9, weight: 2
+    }).addTo(map).bindPopup(
+      `🗑 <b>Benne #${i+1}</b><br>Type: Organique 700L<br>` +
+      `Score: ${scorePct}%<br>${sourceLabel}<br>` +
+      `Lat: ${b.lat.toFixed(5)}<br>Lon: ${b.lon.toFixed(5)}`
+    ).bindTooltip(`Benne #${i+1} — ${scorePct}%`);
+  });
+
+  // Feeding zones
+  (data.s3.feeding_zones||[]).forEach(z => {
+    L.circleMarker([+z.lat,+z.lon], {radius:9,color:'#68d391',fillColor:'#68d391',fillOpacity:.6,weight:2})
+      .addTo(map).bindPopup(`🌿 ${z.zone_id}<br>Score: ${z.score_pct}%`);
+    L.circle([+z.lat,+z.lon], {radius:z.rayon_m||400,color:'#68d391',fillColor:'#68d391',fillOpacity:.05,weight:1})
+      .addTo(map);
+  });
+
+  // POI OSM (food)
+  if (osmData?.food_poi) {
+    osmData.food_poi.forEach(p => {
+      L.circleMarker([p.lat,p.lon], {radius:4,color:'#f6ad55',fillColor:'#f6ad55',fillOpacity:.8,weight:1})
+        .addTo(map).bindPopup(`🍔 ${p.nom||p.type||'Food'}`);
+    });
+  }
+  // Écoles OSM
+  if (osmData?.schools) {
+    osmData.schools.forEach(p => {
+      L.circleMarker([p.lat,p.lon], {radius:5,color:'#9f7aea',fillColor:'#9f7aea',fillOpacity:.7,weight:1})
+        .addTo(map).bindPopup(`🏫 ${p.nom||'École'}`);
+    });
+  }
+  // Parcs OSM
+  if (osmData?.parks) {
+    osmData.parks.forEach(p => {
+      L.circleMarker([p.lat,p.lon], {radius:5,color:'#48bb78',fillColor:'#48bb78',fillOpacity:.6,weight:1})
+        .addTo(map).bindPopup(`🌳 ${p.nom||'Parc'}`);
+    });
+  }
+}
+
+// ── Carte S2 temps réel (iframe Folium) ──────────────────────
+let _lastPipelineData = null;
+
+function loadS2Map() {
+  if (!_lastPipelineData) return;
+  const d    = _lastPipelineData;
+  const meta = d.meta || {};
+  const bins = d.s2?.recommended_bins || d.s2?.optimized_bins || [];
+
+  // Ouvrir un modal avec la carte Folium
+  const modal = document.createElement('div');
+  modal.style.cssText = `position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.85);
+    display:flex;flex-direction:column;align-items:center;justify-content:center`;
+
+  modal.innerHTML = `
+    <div style="width:90vw;height:85vh;background:#1a1f2e;border-radius:12px;
+                overflow:hidden;display:flex;flex-direction:column">
+      <div style="padding:10px 16px;border-bottom:1px solid #2d3748;
+                  display:flex;align-items:center;gap:10px">
+        <span style="font-weight:700">🗺 Bennes recommandées — ${meta.district || ''}</span>
+        <span style="background:#2b6cb0;color:#fff;font-size:.7rem;padding:2px 8px;
+                     border-radius:10px">${bins.length} bennes</span>
+        <button onclick="this.closest('div[style]').parentElement.remove()"
+          style="margin-left:auto;background:none;border:none;color:#a0aec0;
+                 font-size:1.2rem;cursor:pointer">✕</button>
+      </div>
+      <div id="s2-map-loading" style="flex:1;display:flex;align-items:center;
+           justify-content:center;color:#718096;font-size:.85rem">
+        Chargement de la carte...
+      </div>
+      <iframe id="s2-map-frame" style="display:none;flex:1;border:none"></iframe>
+    </div>`;
+
+  document.body.appendChild(modal);
+
+  // Appeler l'API pour générer la carte Folium
+  fetch('http://localhost:5000/api/s2/map', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      district_name: meta.district    || '',
+      population:    meta.population  || 0,
+      nb_menages:    meta.nb_menages  || 0,
+      surface_km2:   meta.surface_km2 || 0,
+      nb_chiens:     d.s1?.nb_chiens  || 0,
+      bins:          bins,
+      bbox:          meta.bbox        || {}
+    })
+  })
+  .then(r => r.json())
+  .then(resp => {
+    if (!resp.ok) throw new Error(resp.error);
+    document.getElementById('s2-map-loading').style.display = 'none';
+    const iframe = document.getElementById('s2-map-frame');
+    iframe.style.display = 'block';
+    iframe.srcdoc = resp.map_html;
+  })
+  .catch(err => {
+    document.getElementById('s2-map-loading').textContent =
+      '⚠ Erreur : ' + err.message + ' (vérifier que folium est installé : pip install folium)';
+  });
+}
+
+// ── Render S1 seul ────────────────────────────────────────────
+function renderS1(s1) {
+  const rc = s1.risk_color||'#a0aec0';
+  document.getElementById('main').innerHTML = `
+    <div style="max-width:400px">
+      <div class="sol-card s1">
+        <div class="sol-hd"><span class="sol-tag">S1</span><span class="sol-ttl">Estimation densité canine</span></div>
+        <div class="mv" style="color:#f6ad55;font-size:2.8rem">${s1.nb_chiens}</div>
+        <div class="ml">chiens estimés</div>
+        <span class="risk-pill" style="background:${rc}22;color:${rc};font-size:.88rem;padding:5px 14px">
+          Risque ${s1.risk_label}</span>
+        <div class="cbar" style="height:5px"><div class="cfill" style="width:${(s1.confidence*100).toFixed(0)}%"></div></div>
+        <div class="stat"><span class="sk">Confiance</span><span class="sv">${(s1.confidence*100).toFixed(0)}%</span></div>
+        <div class="stat"><span class="sk">Source</span><span class="sv">${s1.source}</span></div>
+        <div class="stat"><span class="sk">Ratio</span><span class="sv">${s1.details?.ratio_chien_habitant}</span></div>
+        <div class="stat"><span class="sk">Coeff zone</span><span class="sv">${s1.details?.zone_coeff}</span></div>
+        <div class="stat"><span class="sk">Contrib. food POI</span><span class="sv">+${s1.details?.contribution_food_poi} chiens</span></div>
+        <div class="stat"><span class="sk">Contrib. bennes</span><span class="sv">+${s1.details?.contribution_bennes} chiens</span></div>
+      </div>
+    </div>
+    <div class="raw-sec" style="max-width:560px">
+      <div class="raw-hd" onclick="toggleRaw()">
+        <h3>📋 JSON brut</h3><span id="raw-tog" style="color:#4299e1;font-size:.72rem">Afficher ▾</span>
+      </div>
+      <div id="raw-body"><pre id="raw-json">${JSON.stringify(s1,null,2)}</pre></div>
+    </div>`;
+}
+
+function toggleRaw() {
+  const b = document.getElementById('raw-body');
+  const t = document.getElementById('raw-tog');
+  const open = b.style.display === 'block';
+  b.style.display = open ? 'none' : 'block';
+  t.textContent   = open ? 'Afficher ▾' : 'Masquer ▴';
+}
+
+// ── Live formula preview ──────────────────────────────────────
+function updateBennePreview() {
+  const pop       = parseFloat(v('population')) || 0;
+  const nbFood    = parseFloat(v('nb_food_poi')) || 0;
+  const preview   = document.getElementById('benne-preview');
+  if (!pop) { preview.style.display = 'none'; return; }
+
+  const HABITANTS_PAR_BENNE = 150;
+  const BENNE_PAR_RESTO     = 0.25;
+  const BENNE_PAR_CAFE      = 0.12;
+
+  // On suppose un ratio café/resto ~ 40/60 pour l'estimation rapide
+  const nbResto   = Math.round(nbFood * 0.6);
+  const nbCafe    = Math.round(nbFood * 0.4);
+
+  const base      = pop / HABITANTS_PAR_BENNE;
+  const adjFood   = nbResto * BENNE_PAR_RESTO + nbCafe * BENNE_PAR_CAFE;
+  const totalBrut = base + adjFood;
+  const nb        = Math.max(5, Math.min(300, Math.round(totalBrut)));
+
+  document.getElementById('preview-formula').innerHTML =
+    `<span style="color:#e2e8f0">${pop.toLocaleString()}</span> <span style="color:#4a5568">÷ 150</span> = <span style="color:#4299e1">${base.toFixed(1)}</span><br>` +
+    (nbFood > 0 ? `+ ${nbResto} restos×0.25 + ${nbCafe} cafés×0.12 = <span style="color:#f6ad55">+${adjFood.toFixed(1)}</span><br>` : '') +
+    `<span style="color:#718096">Total brut → </span><span style="color:#68d391">${totalBrut.toFixed(1)}</span>`;
+  document.getElementById('preview-nb').textContent = nb;
+  preview.style.display = 'block';
+}
+
+// Attacher les listeners sur les champs population et food POI
+document.addEventListener('DOMContentLoaded', () => {
+  ['population', 'nb_food_poi'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', updateBennePreview);
+  });
+});
+
+checkHealth();
+</script>
+</body>
+</html>
