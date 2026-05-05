@@ -8,3 +8,4 @@ artifacts/
 site-packages/
 *.pt
 .venv/
+.venv/
