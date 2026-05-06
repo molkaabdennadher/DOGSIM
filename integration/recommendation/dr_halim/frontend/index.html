@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Dr. Halim — AI Vet · DOGSIM-TN</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg:#060606;--surface:#111111;--surface2:#1E1E1E;--border:#1A1A1A;
+  --y:#FFB800;--w:#FFFFFF;--tg:#666666;--ysoft:rgba(255,184,0,.08);
+  --found:#22c55e;--danger:#ef4444;--warning:#FFB800;
+  --fh:'Syne',sans-serif;--fb:'Inter',sans-serif;--fm:'Space Mono',monospace;
+}
+
+body { font-family:var(--fb);background:var(--bg);color:var(--w);height:100dvh;display:flex;flex-direction:column;overflow:hidden;-webkit-font-smoothing:antialiased; }
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--y);}
+
+/* Header */
+header { display:flex;align-items:center;gap:14px;padding:14px 20px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;z-index:10; }
+.avatar { width:42px;height:42px;background:var(--y);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0; }
+.header-info h1 { font-family:var(--fh);font-size:16px;font-weight:800;color:var(--w);letter-spacing:-.3px; }
+.header-info p { font-family:var(--fm);font-size:11px;color:var(--found);display:flex;align-items:center;gap:5px;margin-top:2px;letter-spacing:.06em; }
+.online-dot { width:6px;height:6px;background:var(--found);animation:pulse-dot 2s infinite; }
+@keyframes pulse-dot { 0%,100%{opacity:1;}50%{opacity:.3;} }
+
+/* Chat */
+#chat { flex:1;overflow-y:auto;padding:24px 16px;display:flex;flex-direction:column;gap:18px;scroll-behavior:smooth; }
+
+.msg { display:flex;gap:10px;max-width:780px;animation:fadeUp .3s ease both; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;} }
+.msg.bot  { align-self:flex-start; }
+.msg.user { align-self:flex-end;flex-direction:row-reverse; }
+
+.msg-avatar { width:34px;height:34px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;background:var(--surface2);border:1px solid var(--border); }
+.msg.bot  .msg-avatar { background:var(--y); }
+.msg.user .msg-avatar { background:var(--surface2); }
+
+.bubble { padding:12px 16px;border:1px solid var(--border);font-size:14px;line-height:1.65;max-width:620px;word-break:break-word; }
+.msg.bot  .bubble { background:var(--surface2); }
+.msg.user .bubble { background:var(--y);color:#060606;border-color:var(--y);font-weight:500; }
+
+/* Typing */
+.typing { display:flex;align-items:center;gap:5px;padding:14px 16px; }
+.typing span { width:6px;height:6px;background:var(--y);animation:bounce 1.2s infinite; }
+.typing span:nth-child(2){animation-delay:.2s;}
+.typing span:nth-child(3){animation-delay:.4s;}
+@keyframes bounce{0%,80%,100%{transform:scale(.8);opacity:.4;}40%{transform:scale(1.2);opacity:1;}}
+
+/* Result cards */
+.result-card { background:var(--surface2);border:1px solid var(--border);overflow:hidden;margin-top:10px;font-size:13px; }
+.rc-header { display:flex;align-items:center;gap:10px;padding:12px 16px;font-family:var(--fh);font-weight:700;font-size:14px;border-bottom:1px solid var(--border); }
+.rc-header.breed  { background:rgba(255,184,0,.06);color:var(--y); }
+.rc-header.skin   { background:rgba(255,184,0,.06);color:var(--y); }
+.rc-header.normal { background:rgba(34,197,94,.06);color:var(--found); }
+.rc-header.anormal{ background:rgba(239,68,68,.06);color:var(--danger); }
+
+.rc-body { padding:14px 16px; }
+.rc-row { display:flex;justify-content:space-between;align-items:center;margin-bottom:8px; }
+.rc-label { font-family:var(--fm);font-size:11px;color:var(--tg);letter-spacing:.06em; }
+.rc-value { font-family:var(--fh);font-weight:700;color:var(--w); }
+
+.conf-bar-wrap { margin:6px 0 12px; }
+.conf-bar { height:3px;background:var(--border);overflow:hidden; }
+.conf-bar .fill { height:100%;transition:width .6s ease; }
+.fill.high   { background:var(--found); }
+.fill.medium { background:var(--y); }
+.fill.low    { background:var(--danger); }
+
+.recommendation-box { background:var(--bg);border:1px solid var(--border);padding:12px;margin-top:10px;font-size:13px;line-height:1.7;color:var(--tg);max-height:260px;overflow-y:auto;white-space:pre-wrap; }
+
+.verdict-badge { display:inline-flex;align-items:center;gap:7px;padding:5px 14px;font-family:var(--fm);font-weight:700;font-size:12px;letter-spacing:.06em; }
+.verdict-badge.normal  { background:rgba(34,197,94,.1);color:var(--found);border:1px solid var(--found); }
+.verdict-badge.anormal { background:rgba(239,68,68,.1);color:var(--danger);border:1px solid var(--danger); }
+
+.detail-row { display:flex;align-items:center;gap:10px;margin:8px 0; }
+.detail-icon { font-size:15px;flex-shrink:0; }
+.detail-text { font-size:13px;color:var(--tg); }
+.detail-text strong { color:var(--w); }
+
+/* Input panel */
+#input-panel { background:var(--surface);border-top:1px solid var(--border);padding:14px 16px 18px;flex-shrink:0; }
+
+#upload-zone { border:1px dashed var(--border);padding:18px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg);position:relative;margin-bottom:12px; }
+#upload-zone:hover,#upload-zone.drag { border-color:var(--y);background:var(--ysoft); }
+#upload-zone input[type=file] { position:absolute;inset:0;opacity:0;cursor:pointer; }
+#upload-zone .uz-icon { font-size:28px;margin-bottom:6px; }
+#upload-zone .uz-label { font-family:var(--fm);font-size:12px;color:var(--tg); }
+#upload-zone .uz-label strong { color:var(--y); }
+#upload-zone .uz-hint { font-family:var(--fm);font-size:10px;color:var(--border);margin-top:3px; }
+
+#file-chip { display:none;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);padding:10px 14px;margin-bottom:12px; }
+#file-chip.show { display:flex; }
+#chip-icon { font-size:20px; }
+#chip-name { flex:1;font-family:var(--fm);font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+#chip-size { font-family:var(--fm);font-size:10px;color:var(--tg); }
+#chip-remove { background:none;border:none;cursor:pointer;color:var(--tg);font-size:14px;padding:2px 6px;transition:color .15s; }
+#chip-remove:hover { color:var(--danger); }
+
+#actions { display:grid;grid-template-columns:repeat(4,1fr);gap:8px; }
+.action-btn { display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 8px;background:var(--surface2);border:1px solid var(--border);cursor:pointer;font-family:var(--fm);font-size:11px;color:var(--tg);font-weight:700;letter-spacing:.04em;transition:all .2s;text-align:center;line-height:1.3; }
+.action-btn .ab-icon { font-size:20px; }
+.action-btn:hover:not(:disabled) { border-color:var(--y);color:var(--w);background:var(--ysoft); }
+.action-btn:disabled { opacity:.35;cursor:not-allowed; }
+.action-btn.loading { border-color:var(--y);color:var(--y); }
+
+.photo-badge { font-family:var(--fm);font-size:9px;background:rgba(255,184,0,.1);color:var(--y);border:1px solid rgba(255,184,0,.3);padding:1px 5px;margin-top:2px;letter-spacing:.04em; }
+
+.spin { display:inline-block;width:13px;height:13px;border:2px solid var(--border);border-top-color:var(--y);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle; }
+@keyframes spin{to{transform:rotate(360deg);}}
+
+@media(max-width:640px){.bubble{font-size:13px;}#actions{grid-template-columns:repeat(2,1fr);gap:8px;}.action-btn{font-size:10px;padding:10px 4px;}}
+@media(max-width:360px){#actions{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<!-- ════════════ HEADER ════════════ -->
+<header>
+  <div class="avatar">🐾</div>
+  <div class="header-info">
+    <h1>Dr Halim</h1>
+    <p><span class="online-dot"></span> AI Veterinarian · Online</p>
+  </div>
+</header>
+
+<!-- ════════════ CHAT ════════════ -->
+<div id="chat">
+  <!-- Welcome message -->
+  <div class="msg bot">
+    <div class="msg-avatar">🐾</div>
+    <div class="bubble">
+      <strong>Hello! I'm Dr Halim 👋</strong><br><br>
+      I'm your AI veterinarian, here to help with your dog's health and wellbeing.
+      Upload a <strong>photo or video</strong> of your dog below, then choose one of my four analyses:
+      <br><br>
+      🐕 <strong>Detect Breed</strong> — I'll identify the breed and give you adoption tips<br>
+      🔬 <strong>Skin Check</strong> — I'll assess if there's a skin or coat problem<br>
+      🎬 <strong>Behaviour Analysis</strong> — I'll analyse your dog's behaviour (rage risk detection)<br>
+      💩 <strong>Analyse Matière Fécale</strong> — I'll detect abnormal stool colour indicators<br><br>
+      <em style="color:var(--muted);font-size:12px;">📸 Breed, Skin & Fécale → photo only &nbsp;|&nbsp; 🎬 Behaviour → photo or video</em>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ INPUT PANEL ════════════ -->
+<div id="input-panel">
+
+  <!-- Upload zone (hidden once file is chosen) -->
+  <div id="upload-zone">
+    <input type="file" id="file-input" accept=".jpg,.jpeg,.png,.mp4,.avi,.mov,.mkv">
+    <div class="uz-icon">📂</div>
+    <div class="uz-label"><strong>Click or drag</strong> a file here</div>
+    <div class="uz-hint">Photo: JPG, PNG &nbsp;·&nbsp; Video: MP4, AVI, MOV, MKV</div>
+  </div>
+
+  <!-- File chip (shown after file selected) -->
+  <div id="file-chip">
+    <span id="chip-icon">📄</span>
+    <span id="chip-name"></span>
+    <span id="chip-size"></span>
+    <button id="chip-remove" title="Remove file">✕</button>
+  </div>
+
+  <!-- Action buttons -->
+  <div id="actions">
+    <button class="action-btn" id="btn-breed" disabled onclick="runAnalysis('breed')">
+      <span class="ab-icon">🐕</span>
+      Detect Breed
+      <span class="photo-badge">photo</span>
+    </button>
+    <button class="action-btn" id="btn-skin" disabled onclick="runAnalysis('skin')">
+      <span class="ab-icon">🔬</span>
+      Skin Check
+      <span class="photo-badge">photo</span>
+    </button>
+    <button class="action-btn" id="btn-behavior" disabled onclick="runAnalysis('behavior')">
+      <span class="ab-icon">🎬</span>
+      Behaviour
+      <span class="photo-badge">photo / video</span>
+    </button>
+    <button class="action-btn" id="btn-fecal" disabled onclick="runAnalysis('fecal')">
+      <span class="ab-icon">💩</span>
+      Analyse Fécale
+      <span class="photo-badge">photo</span>
+    </button>
+  </div>
+
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+//  CONFIG
+// ══════════════════════════════════════════════════════════════════
+const API = 'http://localhost:8000/drhalim';
+
+const BEHAV_FR = {
+  tail_wagging:'tail wagging', playing:'playing', sitting:'sitting',
+  standing:'standing', eating:'eating', lying:'lying', digging:'digging',
+  barking:'barking', restlessness:'extreme restlessness',
+  paralysis:'paralysis', incoordination:'motor incoordination',
+  hyper_salivation:'hyper-salivation', bone_in_throat:'bone in throat',
+  dropped_jaw:'dropped jaw', sudden_aggression:'sudden aggression',
+  seizure:'seizure'
+};
+const VOIX_FR = {
+  bark:'normal bark', grunt:'light growl', whine:'whining',
+  growl:'threatening growl', distress:'distress cry'
+};
+const BEHAV_ANORMAL = [
+  'restlessness','paralysis','incoordination','hyper_salivation',
+  'bone_in_throat','dropped_jaw','sudden_aggression','seizure'
+];
+
+// ══════════════════════════════════════════════════════════════════
+//  FILE HANDLING
+// ══════════════════════════════════════════════════════════════════
+let selectedFile = null;
+
+const fileInput   = document.getElementById('file-input');
+const uploadZone  = document.getElementById('upload-zone');
+const fileChip    = document.getElementById('file-chip');
+const chipIcon    = document.getElementById('chip-icon');
+const chipName    = document.getElementById('chip-name');
+const chipSize    = document.getElementById('chip-size');
+const chipRemove  = document.getElementById('chip-remove');
+const btnBreed    = document.getElementById('btn-breed');
+const btnSkin     = document.getElementById('btn-skin');
+const btnBehavior = document.getElementById('btn-behavior');
+const btnFecal    = document.getElementById('btn-fecal');
+const chat        = document.getElementById('chat');
+
+fileInput.addEventListener('change', () => {
+  if (fileInput.files[0]) handleFile(fileInput.files[0]);
+});
+uploadZone.addEventListener('dragover',  e => { e.preventDefault(); uploadZone.classList.add('drag'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault(); uploadZone.classList.remove('drag');
+  if (e.dataTransfer?.files[0]) handleFile(e.dataTransfer.files[0]);
+});
+chipRemove.addEventListener('click', clearFile);
+
+function handleFile(file) {
+  const isPhoto = /\.(jpe?g|png)$/i.test(file.name);
+  const isVideo = /\.(mp4|avi|mov|mkv)$/i.test(file.name);
+  if (!isPhoto && !isVideo) {
+    showBotMessage('⚠️ Unsupported format. Please upload a JPG/PNG photo or an MP4/AVI/MOV/MKV video.');
+    return;
+  }
+
+  selectedFile = file;
+  chipIcon.textContent = isPhoto ? '🖼️' : '🎬';
+  chipName.textContent = file.name;
+  chipSize.textContent = (file.size / 1048576).toFixed(2) + ' MB';
+  fileChip.classList.add('show');
+  uploadZone.style.display = 'none';
+
+  // Enable buttons according to type
+  btnBreed.disabled    = !isPhoto;
+  btnSkin.disabled     = !isPhoto;
+  btnFecal.disabled    = !isPhoto;
+  btnBehavior.disabled = false;
+}
+
+function clearFile() {
+  selectedFile = null;
+  fileInput.value = '';
+  fileChip.classList.remove('show');
+  uploadZone.style.display = '';
+  btnBreed.disabled = btnSkin.disabled = btnBehavior.disabled = btnFecal.disabled = true;
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  CHAT HELPERS
+// ══════════════════════════════════════════════════════════════════
+function addMessage(role, htmlContent) {
+  const row = document.createElement('div');
+  row.className = `msg ${role}`;
+  const av = document.createElement('div');
+  av.className = 'msg-avatar';
+  av.textContent = role === 'bot' ? '🐾' : '👤';
+  const bub = document.createElement('div');
+  bub.className = 'bubble';
+  bub.innerHTML = htmlContent;
+  if (role === 'bot') { row.appendChild(av); row.appendChild(bub); }
+  else                { row.appendChild(av); row.appendChild(bub); }
+  chat.appendChild(row);
+  chat.scrollTop = chat.scrollHeight;
+  return bub;
+}
+
+function showBotMessage(html) { addMessage('bot', html); }
+function showUserMessage(txt) { addMessage('user', txt); }
+
+function showTyping() {
+  const row = document.createElement('div');
+  row.className = 'msg bot'; row.id = 'typing-row';
+  row.innerHTML = '<div class="msg-avatar">🐾</div><div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div>';
+  chat.appendChild(row);
+  chat.scrollTop = chat.scrollHeight;
+}
+function hideTyping() { document.getElementById('typing-row')?.remove(); }
+
+// ══════════════════════════════════════════════════════════════════
+//  LOCK / UNLOCK BUTTONS
+// ══════════════════════════════════════════════════════════════════
+function lockButtons(which) {
+  [btnBreed, btnSkin, btnBehavior, btnFecal].forEach(b => {
+    b.disabled = true;
+    if (b.id === `btn-${which}`) {
+      b.classList.add('loading');
+      b.innerHTML = b.innerHTML.replace(/<span class="ab-icon">.*?<\/span>/, '<span class="ab-icon"><span class="spin"></span></span>');
+    }
+  });
+}
+function unlockButtons() {
+  const isPhoto = selectedFile && /\.(jpe?g|png)$/i.test(selectedFile.name);
+  const isVideo = selectedFile && /\.(mp4|avi|mov|mkv)$/i.test(selectedFile.name);
+  btnBreed.disabled    = !isPhoto;
+  btnSkin.disabled     = !isPhoto;
+  btnFecal.disabled    = !isPhoto;
+  btnBehavior.disabled = !(isPhoto || isVideo);
+  [btnBreed, btnSkin, btnBehavior, btnFecal].forEach(b => b.classList.remove('loading'));
+  // Restore icons
+  btnBreed.innerHTML    = '<span class="ab-icon">🐕</span>Detect Breed<span class="photo-badge">photo</span>';
+  btnSkin.innerHTML     = '<span class="ab-icon">🔬</span>Skin Check<span class="photo-badge">photo</span>';
+  btnBehavior.innerHTML = '<span class="ab-icon">🎬</span>Behaviour<span class="photo-badge">photo / video</span>';
+  btnFecal.innerHTML    = '<span class="ab-icon">💩</span>Analyse Fécale<span class="photo-badge">photo</span>';
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  CONFIDENCE HELPERS
+// ══════════════════════════════════════════════════════════════════
+function confClass(c) {
+  return c >= 0.75 ? 'high' : c >= 0.5 ? 'medium' : 'low';
+}
+function confBar(c) {
+  const cls = confClass(c);
+  const pct = (c * 100).toFixed(1);
+  return `<div class="conf-bar-wrap">
+    <div class="conf-bar"><div class="fill ${cls}" style="width:${pct}%"></div></div>
+  </div>`;
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  MAIN ANALYSIS DISPATCHER
+// ══════════════════════════════════════════════════════════════════
+async function runAnalysis(type) {
+  if (!selectedFile) return;
+
+  const labels = {
+    breed:    '🐕 Detect Breed',
+    skin:     '🔬 Skin Check',
+    behavior: '🎬 Behaviour Analysis',
+    fecal:    '💩 Analyse Matière Fécale',
+  };
+  showUserMessage(`${labels[type]} — <em style="color:#8b949e;font-size:12px;">${selectedFile.name}</em>`);
+  lockButtons(type);
+  showTyping();
+
+  const fd = new FormData();
+  fd.append('file', selectedFile);
+
+  const endpoints = {
+    breed:    `${API}/predict-breed`,
+    skin:     `${API}/predict-skin`,
+    behavior: `${API}/predict-behavior`,
+    fecal:    `${API}/predict-fecal`,
+  };
+
+  try {
+    const resp = await fetch(endpoints[type], { method: 'POST', body: fd });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.detail || `Server error ${resp.status}`);
+    }
+    const data = await resp.json();
+    hideTyping();
+    if      (type === 'breed')    renderBreedResult(data);
+    else if (type === 'skin')     renderSkinResult(data);
+    else if (type === 'behavior') renderBehaviorResult(data);
+    else if (type === 'fecal')    renderFecalResult(data);
+  } catch (e) {
+    hideTyping();
+    let msg = e.message;
+    if (msg.includes('fetch') || msg.includes('Failed') || msg.includes('NetworkError')) {
+      msg = 'Cannot reach the backend. Make sure the Happy Paws server is running on <code>http://localhost:8000</code>.';
+    }
+    showBotMessage(`⚠️ <strong>Error:</strong> ${msg}`);
+  }
+
+  unlockButtons();
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  RENDER — BREED
+// ══════════════════════════════════════════════════════════════════
+function renderBreedResult(d) {
+  const conf = d.confidence;
+  const pct  = (conf * 100).toFixed(1);
+  const hasRec = d.recommendation && !d.recommendation.includes('not available');
+
+  let html = `
+  <p style="margin-bottom:10px;">Here's what I found about your dog! 🐕</p>
+  <div class="result-card">
+    <div class="rc-header breed">🐕 Breed Detection</div>
+    <div class="rc-body">
+      <div class="rc-row">
+        <span class="rc-label">Detected breed</span>
+        <span class="rc-value">${d.breed}</span>
+      </div>
+      <div class="rc-row">
+        <span class="rc-label">Confidence</span>
+        <span class="rc-value" style="color:${conf>=.75?'var(--primary)':conf>=.5?'var(--warning)':'var(--danger)'}">${pct}%</span>
+      </div>
+      ${confBar(conf)}
+      ${hasRec ? `
+      <p style="font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;">📋 Adoption Recommendation</p>
+      <div class="recommendation-box">${d.recommendation}</div>` : `
+      <p style="font-size:12px;color:var(--muted);font-style:italic;">Start Ollama locally (llama3) to receive a detailed adoption recommendation.</p>`}
+    </div>
+  </div>`;
+
+  showBotMessage(html);
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  RENDER — SKIN
+// ══════════════════════════════════════════════════════════════════
+function renderSkinResult(d) {
+  const conf     = d.confidence;
+  const pct      = (conf * 100).toFixed(1);
+  const isHealthy = d.skin.toLowerCase() === 'normal';
+  const statusIcon  = isHealthy ? '✅' : '⚠️';
+  const statusColor = isHealthy ? 'var(--primary)' : 'var(--warning)';
+
+  const advice = isHealthy
+    ? 'Great news! Your dog\'s skin and coat appear healthy. Keep up with regular grooming and a balanced diet.'
+    : 'I noticed some signs of a potential skin or coat issue. I recommend consulting a vet for a thorough examination. In the meantime, avoid harsh shampoos and ensure your dog is on a balanced diet rich in omega-3s.';
+
+  const html = `
+  <p style="margin-bottom:10px;">I've checked your dog's skin and coat 🔬</p>
+  <div class="result-card">
+    <div class="rc-header skin">🔬 Skin & Coat Analysis</div>
+    <div class="rc-body">
+      <div class="rc-row">
+        <span class="rc-label">Status</span>
+        <span class="rc-value" style="color:${statusColor}">${statusIcon} ${d.skin}</span>
+      </div>
+      <div class="rc-row">
+        <span class="rc-label">Confidence</span>
+        <span class="rc-value" style="color:${conf>=.75?'var(--primary)':conf>=.5?'var(--warning)':'var(--danger)'}">${pct}%</span>
+      </div>
+      ${confBar(conf)}
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;margin-top:8px;font-size:13px;line-height:1.7;color:var(--muted);">
+        💡 <strong style="color:var(--text);">Dr Halim's advice:</strong><br>${advice}
+      </div>
+    </div>
+  </div>`;
+
+  showBotMessage(html);
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  BEHAVIOUR EXPLANATION DICTIONARIES
+// ══════════════════════════════════════════════════════════════════
+const BEHAV_EXPLAIN = {
+  tail_wagging:     'The dog is wagging its tail — a sign of excitement or happiness.',
+  playing:          'Active play behaviour — normal and healthy.',
+  sitting:          'The dog is sitting calmly — normal resting posture.',
+  standing:         'Stable standing position — normal behaviour.',
+  eating:           'Normal feeding behaviour detected.',
+  lying:            'The dog is lying down at rest — normal behaviour.',
+  digging:          'Digging behaviour — generally normal instinct.',
+  barking:          'Standard barking — normal vocalisation.',
+  restlessness:     'Excessive agitation — may indicate pain or neurological distress.',
+  paralysis:        'Inability to move normally. Serious sign — immediate vet attention.',
+  incoordination:   'Loss of balance — potential neurological symptom.',
+  hyper_salivation: 'Excessive drooling — may indicate poisoning or oral disease.',
+  bone_in_throat:   'Possible foreign object in the throat — emergency.',
+  dropped_jaw:      'Hanging jaw — serious neurological warning sign.',
+  sudden_aggression:'Sudden unpredictable aggression — high risk, do not approach.',
+  seizure:          'Convulsions detected — immediate medical emergency.',
+};
+const VOIX_EXPLAIN = {
+  bark:    'Normal barking — standard dog vocalisation.',
+  grunt:   'Light growling — may be playful or mildly alert.',
+  whine:   'Whining — may indicate stress, pain, or attention-seeking.',
+  growl:   'Threatening growl — dog is in a defensive or aggressive state.',
+  distress:'Distress cry — the animal is in pain or extreme fear.',
+};
+const VOIX_ANORMAL_LIST = ['growl', 'distress'];
+
+// ══════════════════════════════════════════════════════════════════
+//  RENDER — BEHAVIOR
+// ══════════════════════════════════════════════════════════════════
+function renderBehaviorResult(d) {
+  const isAnormal    = d.decision === 'ANORMAL';
+  const conf         = d.confidence;
+  const pct          = (conf * 100).toFixed(1);
+  const voicePresent = d.voice_present;
+  const soundStatus  = d.sound_status || (voicePresent ? 'sound_detected' : 'unknown');
+  const isImage      = d.input_type === 'image';
+
+  const isBehavAno   = BEHAV_ANORMAL.includes(d.top_behav);
+  const isVoixAno    = d.top_voix ? VOIX_ANORMAL_LIST.includes(d.top_voix) : false;
+
+  const behavColor   = isBehavAno ? 'var(--danger)' : 'var(--found)';
+  const voixColor    = isVoixAno  ? 'var(--danger)' : 'var(--found)';
+
+  const behavRisk    = d.score_behav != null ? (d.score_behav * 100).toFixed(1) : null;
+  const voixRisk     = d.score_voix  != null ? (d.score_voix  * 100).toFixed(1) : null;
+
+  const behavExplain = BEHAV_EXPLAIN[d.top_behav] || '';
+  const voixExplain  = d.top_voix ? (VOIX_EXPLAIN[d.top_voix] || '') : '';
+
+  // Risk bar for a sub-score (yellow fill)
+  function riskBar(pctVal, color) {
+    return `<div style="height:4px;background:var(--border);margin-top:6px;overflow:hidden;">
+      <div style="height:100%;width:${pctVal}%;background:${color};transition:width .6s ease;"></div>
+    </div>`;
+  }
+
+  // Sound panel content
+  let soundPanelHtml;
+  if (voicePresent && d.top_voix) {
+    soundPanelHtml = `
+      <div style="font-family:var(--fh);font-weight:700;font-size:13px;color:${voixColor};">${VOIX_FR[d.top_voix] || d.top_voix}</div>
+      <div style="font-size:11px;color:var(--tg);margin:6px 0;line-height:1.5;">${voixExplain}</div>
+      <div style="font-family:var(--fm);font-size:10px;color:var(--tg);letter-spacing:.06em;">RISK ${voixRisk}%</div>
+      ${riskBar(voixRisk, voixColor)}`;
+  } else {
+    const noSoundMsg =
+      isImage                              ? 'N/A — photo only'
+      : soundStatus === 'ffmpeg_missing'   ? '⚠️ FFmpeg not installed'
+      : soundStatus === 'no_audio_stream'  ? 'No audio track in video'
+      : soundStatus === 'silent_audio'     ? 'Audio silent / below threshold'
+      : soundStatus === 'extraction_failed'? 'Audio extraction failed'
+      : soundStatus === 'empty_wav'        ? 'Audio clip too short'
+      : 'No sound detected';
+    soundPanelHtml = `<div style="font-size:12px;color:var(--tg);font-style:italic;line-height:1.6;">${noSoundMsg}</div>`;
+  }
+
+  // Fusion weights
+  const fusionLine = voicePresent && d.top_voix
+    ? `<span style="color:var(--y);">60%</span> visual &nbsp;+&nbsp; <span style="color:var(--y);">40%</span> sound`
+    : `<span style="color:var(--y);">100%</span> visual (no sound)`;
+
+  const adviceText = isAnormal
+    ? `<strong>Action required:</strong> Abnormal behaviour detected. Do not approach the animal without protection. Contact veterinary authorities immediately for a safe capture and a 10-day observation period.`
+    : `<strong>No urgent action needed:</strong> The dog's behaviour and vocalisations appear normal. Continue passive monitoring. If unvaccinated, report to the municipality for the vaccination programme.`;
+
+  const html = `
+  <p style="margin-bottom:10px;font-size:13px;color:var(--tg);">Behaviour analysis complete 🎬</p>
+  <div class="result-card">
+    <div class="rc-header ${isAnormal ? 'anormal' : 'normal'}">🐾 Behaviour Analysis</div>
+    <div class="rc-body">
+
+      <!-- BADGE + CONFIDENCE -->
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
+        <div style="display:inline-flex;align-items:center;gap:8px;padding:6px 16px;
+          font-family:var(--fm);font-weight:700;font-size:13px;letter-spacing:.1em;
+          background:${isAnormal ? 'rgba(239,68,68,.12)' : 'rgba(34,197,94,.12)'};
+          border:1px solid ${isAnormal ? 'var(--danger)' : 'var(--found)'};
+          color:${isAnormal ? 'var(--danger)' : 'var(--found)'};">
+          ${isAnormal ? '🚨 HIGH RISK' : '✅ LOW RISK'}
+        </div>
+        <div style="font-family:var(--fm);font-size:10px;color:var(--tg);letter-spacing:.06em;">${fusionLine}</div>
+      </div>
+
+      <!-- GLOBAL CONFIDENCE -->
+      <div style="margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">
+          <span style="font-family:var(--fm);font-size:10px;color:var(--tg);letter-spacing:.1em;text-transform:uppercase;">Global Confidence</span>
+          <span style="font-family:var(--fh);font-size:20px;font-weight:800;
+            color:${conf>=.75 ? (isAnormal?'var(--danger)':'var(--found)') : 'var(--y)'};">${pct}%</span>
+        </div>
+        ${confBar(conf)}
+      </div>
+
+      <!-- VISUAL + SOUND PANELS -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+
+        <!-- Visual Analysis -->
+        <div style="background:var(--bg);border:1px solid var(--border);padding:14px;">
+          <div style="font-family:var(--fm);font-size:9px;color:rgba(255,184,0,.6);
+            letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;">🐾 Visual Analysis</div>
+          <div style="font-family:var(--fh);font-weight:700;font-size:13px;color:${behavColor};">${BEHAV_FR[d.top_behav] || d.top_behav}</div>
+          <div style="font-size:11px;color:var(--tg);margin:6px 0;line-height:1.5;">${behavExplain}</div>
+          <div style="font-family:var(--fm);font-size:10px;color:var(--tg);letter-spacing:.06em;">RISK ${behavRisk}%</div>
+          ${riskBar(behavRisk, behavColor)}
+        </div>
+
+        <!-- Sound Analysis -->
+        <div style="background:var(--bg);border:1px solid var(--border);padding:14px;">
+          <div style="font-family:var(--fm);font-size:9px;color:rgba(255,184,0,.6);
+            letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;">🔊 Sound Analysis</div>
+          ${soundPanelHtml}
+        </div>
+      </div>
+
+      <!-- ANALYSIS DETAIL -->
+      <div style="background:var(--surface2);border:1px solid var(--border);padding:10px 14px;
+        font-family:var(--fm);font-size:10px;color:var(--tg);line-height:1.8;letter-spacing:.04em;margin-bottom:12px;">
+        <div><span style="color:rgba(255,184,0,.5);text-transform:uppercase;">Reason</span>&nbsp; ${d.reason}</div>
+        <div><span style="color:rgba(255,184,0,.5);text-transform:uppercase;">Threshold</span>&nbsp; ${(d.threshold*100).toFixed(0)}% &nbsp;·&nbsp;
+          <span style="color:rgba(255,184,0,.5);text-transform:uppercase;">Mode</span>&nbsp; ${d.mode} &nbsp;·&nbsp;
+          ${d.frames_analyzed} frame${d.frames_analyzed!==1?'s':''} analysed</div>
+      </div>
+
+      <!-- ADVICE -->
+      <div style="background:${isAnormal?'rgba(239,68,68,.06)':'rgba(34,197,94,.06)'};
+        border:1px solid ${isAnormal?'rgba(239,68,68,.3)':'rgba(34,197,94,.3)'};
+        padding:12px 14px;font-size:13px;line-height:1.7;color:var(--tg);">
+        ${isAnormal ? '⚠️' : '✅'} ${adviceText}
+      </div>
+
+      <p style="font-size:11px;color:var(--tg);opacity:.4;margin-top:10px;font-style:italic;">
+        ⚠️ Decision-support tool only. Results must be confirmed by a licensed veterinarian.
+      </p>
+    </div>
+  </div>`;
+
+  showBotMessage(html);
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  RENDER — FECAL ANALYSIS (tacheRanim MobileNet)
+// ══════════════════════════════════════════════════════════════════
+const URGENCY_STYLE = {
+  HAUTE:   { color: 'var(--danger)',  bg: '#3a1a1a', border: 'var(--danger)',  label: '🔴 Urgence HAUTE' },
+  MOYENNE: { color: 'var(--warning)', bg: '#3a2a0a', border: 'var(--warning)', label: '🟠 Urgence MOYENNE' },
+  FAIBLE:  { color: 'var(--accent)',  bg: '#0a1a3a', border: 'var(--accent)',  label: '🔵 Urgence FAIBLE' },
+  AUCUNE:  { color: 'var(--primary)', bg: '#1a3a1a', border: 'var(--primary)', label: '🟢 Pas d\'urgence' },
+};
+
+function renderFecalResult(d) {
+  const isNormal    = d.status === 'NORMAL';
+  const isUncertain = d.status === 'INCERTAIN';
+  const conf        = d.confidence;
+  const pct         = (conf * 100).toFixed(1);
+  const isMlModel   = d.model_used === 'tacheRanim';
+
+  const statusIcon  = isNormal ? '✅' : (isUncertain ? '❓' : '⚠️');
+  const headerClass = isNormal ? 'normal' : (isUncertain ? 'skin' : 'anormal');
+  const badgeClass  = isNormal ? 'normal' : 'anormal';
+  const urgence     = d.urgence || 'AUCUNE';
+  const urgStyle    = URGENCY_STYLE[urgence] || URGENCY_STYLE.AUCUNE;
+
+  const conditionsHtml = (d.conditions || []).map(c =>
+    `<div class="detail-row">
+       <span class="detail-icon">${isNormal ? '✔️' : '⚠️'}</span>
+       <span class="detail-text">${c}</span>
+     </div>`
+  ).join('');
+
+  const maladiesHtml = (d.maladies_probables || []).length
+    ? `<div style="margin:10px 0;">
+         <p style="font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;">🦠 Maladies probables</p>
+         ${(d.maladies_probables).map(m => `<div class="detail-row"><span class="detail-icon">•</span><span class="detail-text">${m}</span></div>`).join('')}
+       </div>` : '';
+
+  const traitementHtml = (d.traitement || []).length
+    ? `<div style="margin:10px 0;">
+         <p style="font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;">💊 Traitement recommandé</p>
+         ${(d.traitement).map((t, i) => `<div class="detail-row"><span class="detail-icon">${i+1}.</span><span class="detail-text">${t}</span></div>`).join('')}
+       </div>` : '';
+
+  const llmHtml = d.recommandation_llm
+    ? `<div style="background:var(--bg);border:1px solid var(--accent);border-radius:8px;padding:12px;margin-top:10px;font-size:13px;line-height:1.7;color:var(--muted);">
+         🤖 <strong style="color:var(--accent);">Recommandation IA (GROQ) :</strong><br>${d.recommandation_llm}
+       </div>` : '';
+
+  const cp = d.color_profile || {};
+  const colorSwatch = cp.r != null
+    ? `rgb(${Math.round(cp.r*255)},${Math.round(cp.g*255)},${Math.round(cp.b*255)})` : 'transparent';
+  const colorInfoHtml = cp.r != null
+    ? `<div style="display:flex;align-items:center;gap:12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;margin:10px 0;">
+         <div style="width:40px;height:40px;border-radius:8px;background:${colorSwatch};border:2px solid var(--border);flex-shrink:0;"></div>
+         <div>
+           <div style="font-size:12px;color:var(--muted);font-weight:600;">Teinte dominante détectée</div>
+           <div style="font-size:11px;color:var(--muted);margin-top:2px;">
+             H: ${cp.hue_deg}° &nbsp;·&nbsp; S: ${(cp.saturation*100).toFixed(0)}% &nbsp;·&nbsp; V: ${(cp.brightness*100).toFixed(0)}%
+           </div>
+         </div>
+       </div>` : '';
+
+  const html = `
+  <p style="margin-bottom:10px;">Voici les résultats de l'analyse fécale 💩</p>
+  <div class="result-card">
+    <div class="rc-header ${headerClass}">💩 Analyse Matière Fécale ${isMlModel ? '<span style="font-size:10px;background:#0d419d44;color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:1px 6px;margin-left:8px;">tacheRanim ML</span>' : ''}</div>
+    <div class="rc-body">
+
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
+        <div class="verdict-badge ${badgeClass}">${statusIcon} ${d.status}</div>
+        <div style="padding:4px 10px;border-radius:12px;font-size:12px;font-weight:700;color:${urgStyle.color};background:${urgStyle.bg};border:1px solid ${urgStyle.border};">
+          ${urgStyle.label}
+        </div>
+      </div>
+
+      ${d.detected_class ? `
+      <div class="rc-row">
+        <span class="rc-label">Classe ML détectée</span>
+        <span class="rc-value">${d.detected_class}</span>
+      </div>` : ''}
+
+      <div class="rc-row">
+        <span class="rc-label">Confiance</span>
+        <span class="rc-value" style="color:${conf>=.75?'var(--primary)':conf>=.5?'var(--warning)':'var(--danger)'}">${pct}%</span>
+      </div>
+      ${confBar(conf)}
+
+      <div style="margin:10px 0;">
+        <p style="font-size:12px;color:var(--muted);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;">🔍 Indicateurs détectés</p>
+        ${conditionsHtml}
+      </div>
+
+      ${maladiesHtml}
+      ${traitementHtml}
+      ${colorInfoHtml}
+      ${llmHtml}
+
+      ${!d.recommandation_llm ? `
+      <div style="background:${isNormal?'#1a3a1a':'#3a1a1a'};border:1px solid ${isNormal?'var(--primary)':'var(--danger)'};border-radius:8px;padding:12px;margin-top:10px;font-size:13px;line-height:1.7;color:var(--muted);">
+        💡 <strong style="color:var(--text);">Conseil Dr Halim :</strong><br>${d.advice || ''}
+      </div>` : ''}
+
+      <p style="font-size:11px;color:var(--border);margin-top:10px;font-style:italic;">⚠️ Cet outil est une aide à la décision. L'analyse ne remplace pas un examen vétérinaire en laboratoire.</p>
+    </div>
+  </div>`;
+
+  showBotMessage(html);
+}
+</script>
+</body>
+</html>

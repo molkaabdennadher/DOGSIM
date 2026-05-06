@@ -1,0 +1,19 @@
+{
+  "contacts": {
+    "hospital_email": "ferchichi.adham00@gmail.com",
+    "hospital_label": "Service des urgences — Hôpital Local",
+    "animal_rights_email": "adhamferchichi3@gmail.com",
+    "animal_rights_label": "Société Protectrice des Animaux — Tunis"
+  },
+  "severity_thresholds": {
+    "minor": 0.42,
+    "serious": 0.60,
+    "critical": 0.78
+  },
+  "vision_models": {
+    "sentinel": "yolov8n.pt",
+    "detect": "yolov8l.pt",
+    "pose": "yolov8l-pose.pt",
+    "fp16": true
+  }
+}

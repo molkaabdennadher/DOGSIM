@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>Ali — Shelter Assignment · DOGSIM-TN</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:#060606;--surface:#111111;--surface2:#1E1E1E;--border:#1A1A1A;
+      --y:#FFB800;--w:#FFFFFF;--tg:#666666;--ysoft:rgba(255,184,0,.08);
+      --found:#22c55e;--danger:#ef4444;--warn:#FFB800;
+      --fh:'Syne',sans-serif;--fb:'Inter',sans-serif;--fm:'Space Mono',monospace;
+      --transition:0.18s ease;
+    }
+    html, body { height:100%;font-family:var(--fb);background:var(--bg);color:var(--w);-webkit-font-smoothing:antialiased; }
+    ::-webkit-scrollbar{width:4px;}
+    ::-webkit-scrollbar-track{background:var(--bg);}
+    ::-webkit-scrollbar-thumb{background:var(--y);}
+
+    .app { display:grid;grid-template-columns:280px 1fr;grid-template-rows:56px 1fr;height:100vh; }
+
+    /* Header */
+    header { grid-column:1/-1;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:14px; }
+    .logo { font-family:var(--fh);font-size:1.1rem;font-weight:800;color:var(--y);letter-spacing:-.5px; }
+    .logo span { color:var(--w); }
+    .subtitle { font-family:var(--fm);font-size:.68rem;color:var(--tg);letter-spacing:.06em; }
+    .connection-dot { width:8px;height:8px;background:#333;margin-left:auto;transition:background .3s; }
+    .connection-dot.connected { background:var(--found); }
+
+    /* Sidebar */
+    aside { background:var(--surface);border-right:1px solid var(--border);padding:16px;display:flex;flex-direction:column;gap:14px;overflow-y:auto; }
+    .section-title { font-family:var(--fm);font-size:.65rem;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,184,0,.5);margin-bottom:4px; }
+
+    /* Upload zone */
+    .upload-zone { border:1px dashed var(--border);padding:20px 12px;text-align:center;cursor:pointer;transition:border-color var(--transition),background var(--transition); }
+    .upload-zone:hover,.upload-zone.drag-over { border-color:var(--y);background:var(--ysoft); }
+    .upload-zone input { display:none; }
+    .upload-icon { font-size:1.8rem;margin-bottom:6px; }
+    .upload-label { font-family:var(--fm);font-size:.7rem;color:var(--tg);letter-spacing:.04em; }
+    .upload-btn { margin-top:10px;padding:9px 16px;background:var(--y);color:#060606;border:none;cursor:pointer;font-family:var(--fm);font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;transition:opacity var(--transition);width:100%; }
+    .upload-btn:hover { opacity:.88; }
+    .upload-btn:disabled { opacity:.35;cursor:not-allowed; }
+
+    /* Stats */
+    .stats-grid { display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border); }
+    .stat-card { background:var(--surface2);padding:12px;text-align:center; }
+    .stat-value { font-family:var(--fh);font-size:1.4rem;font-weight:800;color:var(--y); }
+    .stat-label { font-family:var(--fm);font-size:.62rem;color:var(--tg);margin-top:2px;letter-spacing:.06em; }
+    .stat-value.green { color:var(--found); }
+    .stat-value.orange { color:var(--warn); }
+
+    /* Quick actions */
+    .quick-btn { display:block;width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border);color:var(--tg);font-family:var(--fb);font-size:.8rem;cursor:pointer;text-align:left;transition:border-color var(--transition),color var(--transition); }
+    .quick-btn:hover { border-color:var(--y);color:var(--w); }
+    .quick-btn .icon { margin-right:6px; }
+
+    /* Chat */
+    main { display:flex;flex-direction:column;overflow:hidden; }
+    #messages { flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:14px;scroll-behavior:smooth; }
+
+    .msg { display:flex;gap:10px;align-items:flex-start;animation:fadeUp .2s ease; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;} }
+    .msg.user { flex-direction:row-reverse; }
+
+    .avatar { width:32px;height:32px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0; }
+    .msg.user .avatar { background:var(--y); }
+
+    .bubble { max-width:72%;background:var(--surface2);border:1px solid var(--border);padding:11px 15px;font-size:.88rem;line-height:1.65;white-space:pre-wrap;word-break:break-word; }
+    .msg.user .bubble { background:var(--y);color:#060606;border-color:var(--y);font-weight:500; }
+
+    /* Tool indicator */
+    .tool-indicator { display:flex;align-items:center;gap:8px;font-family:var(--fm);font-size:.7rem;color:var(--tg);background:var(--surface2);border:1px solid var(--border);padding:7px 12px;margin-top:4px;max-width:72%; }
+    .tool-indicator .spinner { width:12px;height:12px;border:2px solid var(--border);border-top-color:var(--y);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0; }
+    @keyframes spin { to{transform:rotate(360deg);} }
+    .tool-name { color:var(--y);font-weight:700; }
+
+    .typing-cursor::after { content:'▋';animation:blink .9s step-end infinite; }
+    @keyframes blink { 50%{opacity:0;} }
+
+    /* Input */
+    .input-bar { padding:12px 24px 16px;background:var(--surface);border-top:1px solid var(--border);display:flex;gap:10px;align-items:flex-end; }
+    #chat-input { flex:1;background:var(--surface2);border:1px solid var(--border);padding:10px 14px;color:var(--w);font-size:.9rem;font-family:var(--fb);resize:none;max-height:140px;outline:none;transition:border-color var(--transition);line-height:1.5; }
+    #chat-input:focus { border-color:var(--y); }
+    #send-btn { width:42px;height:42px;background:var(--y);border:none;color:#060606;font-size:1.1rem;font-weight:700;cursor:pointer;transition:opacity var(--transition);flex-shrink:0; }
+    #send-btn:hover { opacity:.88; }
+    #send-btn:disabled { opacity:.35;cursor:not-allowed; }
+
+    .progress-bar { height:2px;background:var(--y);width:0%;transition:width .3s;margin-top:8px; }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Header -->
+  <header>
+    <div class="logo">🐾 Ali<span>·AI</span></div>
+    <div class="subtitle">Shelter Assignment Assistant</div>
+    <div class="connection-dot" id="conn-dot"></div>
+  </header>
+
+  <!-- Sidebar -->
+  <aside>
+    <div>
+        <a href="/" style="display:flex;align-items:center;gap:8px;padding:8px 12px;
+    border:none;border-radius:8px;background:transparent;color:var(--text-muted);
+    cursor:pointer;font-size:.8rem;text-decoration:none;transition:background .15s;"
+    onmouseover="this.style.background='rgba(255,255,255,.04)'"
+    onmouseout="this.style.background='transparent'">← Back to home</a>
+    <div class="section-title">Upload Dogs</div>
+      <div class="upload-zone" id="upload-zone">
+        <input type="file" id="file-input" accept=".xlsx" />
+        <div class="upload-icon">📋</div>
+        <div class="upload-label" id="upload-label">Drop file here or click to browse<br><small style="opacity:.6">Excel .xlsx only</small></div>
+        <div class="progress-bar" id="progress-bar"></div>
+        <button class="upload-btn" id="upload-btn" disabled>Assign Dogs</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-title">Live Stats</div>
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card"><div class="stat-value" id="s-total">—</div><div class="stat-label">Total Dogs</div></div>
+        <div class="stat-card"><div class="stat-value green" id="s-assigned">—</div><div class="stat-label">Assigned</div></div>
+        <div class="stat-card"><div class="stat-value orange" id="s-waiting">—</div><div class="stat-label">Waiting</div></div>
+        <div class="stat-card"><div class="stat-value" id="s-shelters">—</div><div class="stat-label">Shelters</div></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-title">Quick Questions</div>
+      <button class="quick-btn" onclick="sendQuick('Show me all shelters with their capacity and budget')">
+        <span class="icon">🏠</span>All shelters overview
+      </button>
+      <button class="quick-btn" onclick="sendQuick('Are there any shelters at risk of overcrowding?')">
+        <span class="icon">⚠️</span>Capacity risks
+      </button>
+      <button class="quick-btn" onclick="sendQuick('Show me the waiting list')">
+        <span class="icon">🕐</span>Waiting list
+      </button>
+      <button class="quick-btn" onclick="sendQuick('Show me all dogs with serious injuries')">
+        <span class="icon">🏥</span>Serious injury dogs
+      </button>
+      <button class="quick-btn" onclick="sendQuick('What are the current system statistics?')">
+        <span class="icon">📊</span>System statistics
+      </button>
+      <button class="quick-btn" onclick="sendQuick('Which shelters have pregnant dogs? How many puppies are expected?')">
+        <span class="icon">🐶</span>Pregnant dogs
+      </button>
+    </div>
+  </aside>
+
+  <!-- Chat -->
+  <main>
+    <div id="messages">
+      <!-- Greeting injected by the server via WebSocket on first connect -->
+    </div>
+
+    <div class="input-bar">
+      <textarea id="chat-input" rows="1" placeholder="Ask Ali anything about shelters and dogs…"></textarea>
+      <button id="send-btn" title="Send">➤</button>
+    </div>
+  </main>
+
+</div>
+
+<script>
+  // ── Config ────────────────────────────────────────────────────────────────
+  const SESSION_ID  = 'session-' + Math.random().toString(36).slice(2, 10);
+  const _wsProto    = location.protocol === 'https:' ? 'wss' : 'ws';
+  const WS_URL      = `${_wsProto}://${location.host}/ws/ali/${SESSION_ID}`;
+  const API_BASE    = `${location.protocol}//${location.host}`;
+
+  // ── State ─────────────────────────────────────────────────────────────────
+  let ws             = null;
+  let isStreaming    = false;
+  let currentBubble  = null;
+  let currentToolDiv = null;
+  let _greetingDone  = false;   // send server greeting only on first connect
+
+  // ── WebSocket ─────────────────────────────────────────────────────────────
+  function connectWS() {
+    ws = new WebSocket(WS_URL);
+
+    ws.onopen = () => {
+      document.getElementById('conn-dot').classList.add('connected');
+      // The server sends an automatic greeting that queries the live DB state.
+      // Lock the input until that greeting arrives so the user cannot interrupt.
+      // Guard: only on first connect — reconnects skip the greeting to avoid duplicates.
+      if (!_greetingDone) {
+        _greetingDone = true;
+        setStreaming(true);
+      }
+    };
+    ws.onclose = () => {
+      document.getElementById('conn-dot').classList.remove('connected');
+      setTimeout(connectWS, 3000);
+    };
+    ws.onmessage = (e) => {
+      const data = JSON.parse(e.data);
+      handleWSMessage(data);
+    };
+    ws.onerror = () => ws.close();
+  }
+
+  function handleWSMessage(data) {
+    if (data.type === 'token') {
+      if (!currentBubble) {
+        removeToolIndicator();
+        currentBubble = appendBubble('ali', '', true);
+      }
+      currentBubble.textContent += data.content;
+      scrollToBottom();
+
+    } else if (data.type === 'tool') {
+      if (data.phase === 'start') {
+        if (!currentBubble) {
+          currentToolDiv = showToolIndicator(data.name, data.input);
+        }
+      } else if (data.phase === 'end') {
+        removeToolIndicator();
+      }
+
+    } else if (data.type === 'done') {
+      if (currentBubble) {
+        currentBubble.classList.remove('typing-cursor');
+        currentBubble = null;
+      }
+      removeToolIndicator();
+      setStreaming(false);
+      loadStats();
+
+    } else if (data.type === 'error') {
+      removeToolIndicator();
+      appendBubble('ali', `⚠️ Error: ${data.content}`);
+      setStreaming(false);
+      if (currentBubble) { currentBubble.classList.remove('typing-cursor'); currentBubble = null; }
+    }
+  }
+
+  // ── Chat UI helpers ───────────────────────────────────────────────────────
+  function appendBubble(who, text, typing = false) {
+    const container = document.getElementById('messages');
+    const msgDiv = document.createElement('div');
+    msgDiv.className = 'msg' + (who === 'user' ? ' user' : '');
+
+    const avatar = document.createElement('div');
+    avatar.className = 'avatar';
+    avatar.textContent = who === 'user' ? '👤' : '🤖';
+
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble' + (typing ? ' typing-cursor' : '');
+    bubble.textContent = text;
+
+    msgDiv.appendChild(avatar);
+    msgDiv.appendChild(bubble);
+    container.appendChild(msgDiv);
+    scrollToBottom();
+    return bubble;
+  }
+
+  function showToolIndicator(toolName, input) {
+    const container = document.getElementById('messages');
+    const div = document.createElement('div');
+    div.className = 'tool-indicator';
+    div.id = 'tool-indicator';
+    div.innerHTML = `<div class="spinner"></div>
+      <span>Calling <span class="tool-name">${toolName}</span>…</span>`;
+    container.appendChild(div);
+    scrollToBottom();
+    return div;
+  }
+
+  function removeToolIndicator() {
+    const el = document.getElementById('tool-indicator');
+    if (el) el.remove();
+  }
+
+  function scrollToBottom() {
+    const m = document.getElementById('messages');
+    m.scrollTop = m.scrollHeight;
+  }
+
+  function setStreaming(val) {
+    isStreaming = val;
+    document.getElementById('send-btn').disabled = val;
+    document.getElementById('chat-input').disabled = val;
+  }
+
+  // ── Send message ──────────────────────────────────────────────────────────
+  function sendMessage() {
+    const input = document.getElementById('chat-input');
+    const text  = input.value.trim();
+    if (!text || isStreaming || !ws || ws.readyState !== WebSocket.OPEN) return;
+
+    appendBubble('user', text);
+    input.value = '';
+    input.style.height = 'auto';
+    setStreaming(true);
+    currentBubble = null;
+
+    ws.send(JSON.stringify({ message: text }));
+  }
+
+  function sendQuick(text) {
+    document.getElementById('chat-input').value = text;
+    sendMessage();
+  }
+
+  // ── Input auto-resize ─────────────────────────────────────────────────────
+  document.getElementById('chat-input').addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 140) + 'px';
+  });
+  document.getElementById('chat-input').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  });
+  document.getElementById('send-btn').addEventListener('click', sendMessage);
+
+  // ── File upload ───────────────────────────────────────────────────────────
+  const uploadZone  = document.getElementById('upload-zone');
+  const fileInput   = document.getElementById('file-input');
+  const uploadBtn   = document.getElementById('upload-btn');
+  const uploadLabel = document.getElementById('upload-label');
+  const progressBar = document.getElementById('progress-bar');
+  let selectedFile  = null;
+
+  uploadZone.addEventListener('click', (e) => {
+    if (e.target.closest('#upload-btn')) return;
+    fileInput.click();
+  });
+  fileInput.addEventListener('change', () => {
+    selectedFile = fileInput.files[0];
+    if (selectedFile) {
+      uploadLabel.textContent = selectedFile.name;
+      uploadBtn.disabled = false;
+    }
+  });
+
+  uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+  uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+  uploadZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadZone.classList.remove('drag-over');
+    const f = e.dataTransfer.files[0];
+    if (!f) return;
+    const ext = f.name.slice(f.name.lastIndexOf('.')).toLowerCase();
+    if (ext === '.xlsx') {
+      selectedFile = f;
+      uploadLabel.textContent = f.name;
+      uploadBtn.disabled = false;
+    } else {
+      appendBubble('ali', `⚠️ Format non supporté : ${ext}. Seul le format .xlsx (Excel) est accepté.`);
+    }
+  });
+
+  uploadBtn.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    if (!selectedFile) return;
+    uploadBtn.disabled = true;
+    progressBar.style.width = '40%';
+
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+
+    try {
+      const res  = await fetch(`${API_BASE}/ali/upload`, { method: 'POST', body: formData });
+      progressBar.style.width = '100%';
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || data.message || 'Upload failed');
+
+      if (data.status === 'ok') {
+        const summary = `✅ Assignment complete!\n• ${data.assigned_count}/${data.total} dogs assigned\n• ${data.waiting_count} on waiting list` +
+          (data.warnings?.length ? `\n\n⚠️ Warnings:\n${data.warnings.map(w => '• ' + w).join('\n')}` : '');
+        appendBubble('ali', summary);
+        loadStats();
+        // Also tell Ali so she can give context
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          setStreaming(true);
+          ws.send(JSON.stringify({ message: `A spreadsheet file was just processed: ${data.assigned_count} dogs assigned, ${data.waiting_count} on waiting list. Please give me a brief summary of any critical cases and shelter status.` }));
+        }
+      } else {
+        appendBubble('ali', `⚠️ ${data.status === 'no_dogs' ? 'No valid dogs found in file.' : 'Upload failed.'}`);
+      }
+    } catch (err) {
+      appendBubble('ali', `⚠️ Upload error: ${err.message}`);
+    } finally {
+      setTimeout(() => { progressBar.style.width = '0%'; }, 1000);
+      selectedFile = null;
+      uploadLabel.innerHTML = 'Drop file here or click to browse<br><small style="opacity:.6">Excel · CSV · TSV · ODS</small>';
+      fileInput.value = '';
+    }
+  });
+
+  // ── Stats polling ─────────────────────────────────────────────────────────
+  async function loadStats() {
+    try {
+      const res   = await fetch(`${API_BASE}/ali/statistics`);
+      const stats = await res.json();
+      document.getElementById('s-total').textContent    = stats.total_dogs    ?? '—';
+      document.getElementById('s-assigned').textContent = stats.assigned_dogs ?? '—';
+      document.getElementById('s-waiting').textContent  = stats.waiting_dogs  ?? '—';
+      document.getElementById('s-shelters').textContent = stats.total_shelters ?? '—';
+    } catch (_) {}
+  }
+
+  // ── Init ─────────────────────────────────────────────────────────────────────────────────
+  connectWS();
+  loadStats();
+</script>
+</body>
+</html>

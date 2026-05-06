@@ -1,0 +1,44 @@
+# ── Web framework ──────────────────────────────────────────────────────────────
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+python-multipart>=0.0.12
+aiofiles>=24.1.0
+
+# ── LLM & agentic framework ───────────────────────────────────────────────────
+openai>=1.54.0           # Groq via OpenAI-compatible endpoint
+groq>=0.11.0
+langchain-groq>=0.2.0
+langgraph>=0.2.50
+langchain-core>=0.3.0
+python-dotenv>=1.0.0
+
+# ── ML / embeddings ───────────────────────────────────────────────────────────
+torch>=2.0.0
+sentence-transformers>=3.0.0
+open-clip-torch>=2.24.0
+faiss-cpu>=1.7.0
+
+# ── Vector store ──────────────────────────────────────────────────────────────
+# ChromaDB is the primary vector store (cosinesimilarity2.ipynb → chroma_db/).
+# FAISS is used as an automatic fallback when chroma_db/ is absent.
+chromadb>=0.5.0
+
+# ── Data / serialisation ──────────────────────────────────────────────────────
+numpy>=1.25.0
+pandas>=2.0.0
+pyarrow>=14.0.0
+pydantic>=2.0.0
+
+# ── Spreadsheet engines (Ali upload: Excel / CSV / ODS support) ───────────────
+openpyxl>=3.1.0          # .xlsx, .xlsm  (also required by pandas read_excel)
+xlrd>=2.0.1              # .xls  (legacy Excel format)
+odfpy>=1.4.1             # .ods  (OpenDocument Spreadsheet)
+
+# ── Image processing ──────────────────────────────────────────────────────────
+pillow>=10.0.0
+opencv-python>=4.8.0
+
+# ── Aggression detection (YOLOv8-pose + ByteTrack) ───────────────────────────
+# Comment this line out if you only need the Maya adoption-advisor features.
+# The server will start normally; /aggression/analyze-video returns HTTP 503.
+ultralytics>=8.2.0

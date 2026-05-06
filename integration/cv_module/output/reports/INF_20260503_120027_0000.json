@@ -1,0 +1,24 @@
+{
+  "infraction_id": "INF_20260503_120027_0000",
+  "timestamp": "2026-05-03T12:00:27.257930",
+  "camera_id": "CAM_001",
+  "in_feeding_zone": false,
+  "dog_track_id": 8,
+  "dog_position": [
+    717,
+    718
+  ],
+  "stagnation_seconds": 8.167820150659134,
+  "human_found": true,
+  "deposit_position": [
+    645,
+    587
+  ],
+  "distance_at_deposit": 149.4824404403407,
+  "seconds_before_dog": 5.334086629001883,
+  "frames_searched": 165,
+  "image_approach_path": "cv_module/output\\frames\\INF_20260503_120027_0000_1_approche.jpg",
+  "image_deposit_path": "cv_module/output\\frames\\INF_20260503_120027_0000_2_depot.jpg",
+  "image_departure_path": "cv_module/output\\frames\\INF_20260503_120027_0000_3_depart.jpg",
+  "notes": "Visite humaine détectée : frames 420→420"
+}

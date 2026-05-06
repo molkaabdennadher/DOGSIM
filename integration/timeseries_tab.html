@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prévisions Temporelles — DOGSIM-TN</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.27.0/plotly.min.js"></script>
+<style>
+:root{
+  --y:#FFB800;--b:#060606;--w:#FFFFFF;
+  --dg:#111111;--mg:#1E1E1E;--tg:#666666;
+  --border:#1A1A1A;
+  --fh:'Syne',sans-serif;--fb:'Inter',sans-serif;--fm:'Space Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow-x:hidden;background:var(--b);color:var(--w);font-family:var(--fb);-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:var(--b)}
+::-webkit-scrollbar-thumb{background:var(--y)}
+
+/* ── API bar ── */
+.api-bar{
+  background:var(--dg);border-bottom:1px solid var(--border);
+  padding:0 16px;height:37px;display:flex;align-items:center;gap:8px;
+  font-family:var(--fm);font-size:10px;color:var(--tg);letter-spacing:.08em;flex-shrink:0;
+}
+.badge{background:var(--y);color:var(--b);font-family:var(--fm);font-size:9px;font-weight:700;
+  padding:2px 6px;border-radius:2px;letter-spacing:.1em}
+.dot{width:7px;height:7px;border-radius:50%}
+.dot-ok{background:#22C55E}.dot-err{background:#EF4444}.dot-idle{background:var(--tg)}.dot-warn{background:#F59E0B}
+
+/* ── Layout ── */
+.layout{display:grid;grid-template-columns:300px 1fr;align-items:start;min-height:calc(100vh - 37px)}
+
+/* ── Sidebar ── */
+.sidebar{
+  background:var(--dg);border-right:1px solid var(--border);
+  padding:16px 14px;
+  position:sticky;top:37px;
+  height:calc(100vh - 37px);
+  overflow-y:auto;
+}
+.sec{font-family:var(--fm);font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.2em;
+  color:rgba(255,184,0,.5);margin:20px 0 8px;display:flex;align-items:center;gap:8px}
+.sec::before{content:'';width:16px;height:1px;background:var(--y);opacity:.4}
+.sec:first-child{margin-top:0}
+
+.field{margin-bottom:10px}
+.field label{display:block;font-family:var(--fm);font-size:9px;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--tg);margin-bottom:4px}
+.field select{
+  width:100%;background:var(--mg);border:1px solid var(--border);
+  color:var(--w);border-radius:2px;padding:8px 10px;font-size:.82rem;font-family:var(--fb);
+  outline:none;transition:border .15s;cursor:pointer;
+}
+.field select:focus{border-color:var(--y)}
+.field select option{background:var(--mg)}
+
+/* ── Buttons ── */
+.btn-run{
+  width:100%;padding:10px;background:var(--y);border:none;
+  color:var(--b);border-radius:2px;font-family:var(--fm);font-size:10px;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:opacity .15s;
+}
+.btn-run:hover{opacity:.88}
+.btn-run:disabled{opacity:.4;cursor:not-allowed}
+.btn-sec{
+  width:100%;padding:8px;margin-top:6px;
+  background:transparent;border:1px solid var(--border);
+  color:var(--tg);border-radius:2px;font-family:var(--fm);font-size:9px;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .15s;
+}
+.btn-sec:hover{border-color:var(--y);color:var(--y)}
+
+/* ── Stat cards ── */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px}
+.stat-card{background:var(--mg);border:1px solid var(--border);border-radius:2px;padding:8px 10px}
+.stat-val{font-family:var(--fm);font-size:1rem;font-weight:700;color:var(--y)}
+.stat-lbl{font-family:var(--fm);font-size:8px;color:var(--tg);letter-spacing:.08em;text-transform:uppercase;margin-top:2px}
+
+/* ── Metrics table ── */
+.mtable{width:100%;border-collapse:collapse;font-size:.75rem;margin-top:6px}
+.mtable th{font-family:var(--fm);font-size:8px;text-transform:uppercase;letter-spacing:.1em;
+  color:var(--tg);padding:4px 6px;text-align:left;border-bottom:1px solid var(--border)}
+.mtable td{padding:5px 6px;border-bottom:1px solid rgba(26,26,26,.5);font-family:var(--fm);font-size:.7rem}
+.mtable tr:last-child td{border-bottom:none}
+.mtable tr:hover td{background:rgba(255,184,0,.04)}
+.mtable .q-name{color:var(--w);font-weight:700}
+.mtable .good{color:#22C55E}
+.mtable .warn{color:#F59E0B}
+.mtable .bad{color:#EF4444}
+
+/* ── Chart tabs ── */
+.chart-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);padding:0 20px}
+.chart-tab{padding:10px 14px;font-family:var(--fm);font-size:9px;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;cursor:pointer;color:var(--tg);
+  border-bottom:2px solid transparent;transition:all .15s;background:none;border-top:none;border-left:none;border-right:none;}
+.chart-tab.active{color:var(--y);border-bottom-color:var(--y)}
+.chart-tab:hover:not(.active){color:var(--w)}
+
+/* ── Content area ── */
+.content{padding:20px;display:flex;flex-direction:column;gap:16px;min-height:calc(100vh - 37px)}
+.panel{background:var(--dg);border:1px solid var(--border);border-radius:2px;padding:0}
+.panel-head{padding:10px 16px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between}
+.panel-title{font-family:var(--fh);font-size:.85rem;font-weight:700;letter-spacing:.02em}
+.panel-sub{font-family:var(--fm);font-size:9px;color:var(--tg);letter-spacing:.08em}
+.panel-body{padding:16px}
+
+/* ── Loading / error ── */
+.spinner{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  padding:60px 0;font-family:var(--fm);font-size:.8rem;color:var(--tg)
+}
+.spin-dot{width:8px;height:8px;border-radius:50%;background:var(--y);
+  animation:pulse 1.2s ease-in-out infinite}
+.spin-dot:nth-child(2){animation-delay:.4s}
+.spin-dot:nth-child(3){animation-delay:.8s}
+@keyframes pulse{0%,100%{opacity:.2;transform:scale(.8)}50%{opacity:1;transform:scale(1.1)}}
+
+.err-box{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:2px;
+  padding:12px 14px;font-family:var(--fm);font-size:.75rem;color:#EF4444;letter-spacing:.04em}
+
+/* ── Season chip ── */
+.chip{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:2px;
+  font-family:var(--fm);font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+.chip-ete{background:rgba(239,159,39,.15);color:#EF9F27;border:1px solid rgba(239,159,39,.3)}
+.chip-hiver{background:rgba(55,138,221,.15);color:#378ADD;border:1px solid rgba(55,138,221,.3)}
+.chip-ramadan{background:rgba(255,184,0,.15);color:var(--y);border:1px solid rgba(255,184,0,.3)}
+.chip-printemps{background:rgba(29,158,117,.15);color:#1D9E75;border:1px solid rgba(29,158,117,.3)}
+</style>
+</head>
+<body>
+
+<!-- ── API bar ── -->
+<div class="api-bar" id="apiBar">
+  <span class="badge">TS</span>
+  <div class="dot dot-idle" id="statusDot"></div>
+  <span id="statusTxt">Connexion…</span>
+  <span style="margin-left:auto;font-size:9px;opacity:.5">DOGSIM-TN · Prévisions temporelles</span>
+</div>
+
+<!-- ── Layout ── -->
+<div class="layout">
+
+  <!-- ── Sidebar ── -->
+  <div class="sidebar">
+    <div class="sec">Quartier</div>
+    <div class="field">
+      <label>Sélectionner</label>
+      <select id="selQuartier">
+        <option value="Bab Souika">Bab Souika</option>
+        <option value="La Medina">La Medina</option>
+        <option value="Le Bardo">Le Bardo</option>
+        <option value="Ariana">Ariana</option>
+        <option value="Ben Arous">Ben Arous</option>
+        <option value="La Marsa">La Marsa</option>
+      </select>
+    </div>
+
+    <div class="sec">Analyse</div>
+    <button class="btn-run" id="btnForecast" onclick="runForecast()">
+      📈 Lancer SARIMAX
+    </button>
+    <button class="btn-sec" id="btnAllMetrics" onclick="loadMetrics()">
+      📊 Toutes les métriques
+    </button>
+
+    <div class="sec" id="statsSection" style="display:none">Résultats</div>
+    <div id="statsCards"></div>
+
+    <div class="sec">Légende saisonnière</div>
+    <div style="display:flex;flex-direction:column;gap:4px;margin-top:2px">
+      <span class="chip chip-ete">☀ Été — densité ×1.45</span>
+      <span class="chip chip-hiver">❄ Hiver — densité ×1.30</span>
+      <span class="chip chip-ramadan">☽ Ramadan — densité ×0.75</span>
+      <span class="chip chip-printemps">🌿 Printemps — densité ×1.10</span>
+    </div>
+
+    <div class="sec">Modèle</div>
+    <div style="font-family:var(--fm);font-size:9px;color:var(--tg);line-height:1.6">
+      SARIMAX(1,0,1)(1,0,1,52)<br>
+      Exogènes : Ramadan / Été / Hiver<br>
+      Horizon : 26 semaines<br>
+      Données : 2015–2023 · hebdo
+    </div>
+  </div>
+
+  <!-- ── Content ── -->
+  <div class="content">
+
+    <!-- Chart tabs -->
+    <div style="background:var(--dg);border:1px solid var(--border);border-radius:2px">
+      <div class="chart-tabs">
+        <button class="chart-tab active" onclick="switchTab('forecast')">Prévisions SARIMAX</button>
+        <button class="chart-tab" onclick="switchTab('stl')">Décomposition STL</button>
+        <button class="chart-tab" onclick="switchTab('metrics')">Métriques comparatives</button>
+      </div>
+
+      <!-- Forecast panel -->
+      <div id="tabForecast" style="padding:16px">
+        <div class="spinner" id="spForecast">
+          <div class="spin-dot"></div><div class="spin-dot"></div><div class="spin-dot"></div>
+          <span>En attente de sélection…</span>
+        </div>
+        <div id="chartForecast" style="display:none"></div>
+      </div>
+
+      <!-- STL panel -->
+      <div id="tabStl" style="padding:16px;display:none">
+        <div class="spinner" id="spStl">
+          <div class="spin-dot"></div><div class="spin-dot"></div><div class="spin-dot"></div>
+          <span>Sélectionner un quartier et lancer l'analyse</span>
+        </div>
+        <div id="chartStl" style="display:none"></div>
+      </div>
+
+      <!-- Metrics panel -->
+      <div id="tabMetrics" style="padding:16px;display:none">
+        <div class="spinner" id="spMetrics">
+          <div class="spin-dot"></div><div class="spin-dot"></div><div class="spin-dot"></div>
+          <span>Cliquer sur "Toutes les métriques"</span>
+        </div>
+        <div id="chartMetrics" style="display:none"></div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /layout -->
+
+<script>
+// ── Config ────────────────────────────────────────────────────
+const API = 'http://localhost:8080';
+let currentTab = 'forecast';
+let currentQuartier = 'Bab Souika';
+
+// Plotly dark theme base
+const LAYOUT_BASE = {
+  paper_bgcolor: '#111111',
+  plot_bgcolor:  '#111111',
+  font:          { family: 'Inter, sans-serif', color: '#FFFFFF', size: 11 },
+  xaxis: { gridcolor:'#1A1A1A', zerolinecolor:'#1A1A1A', tickfont:{size:10,color:'#666'} },
+  yaxis: { gridcolor:'#1A1A1A', zerolinecolor:'#1A1A1A', tickfont:{size:10,color:'#666'} },
+  legend:{ bgcolor:'transparent', font:{size:10} },
+  margin:{ l:50, r:20, t:30, b:50 },
+};
+const COLORS = {
+  'Bab Souika':'#E24B4A','La Medina':'#EF9F27','Le Bardo':'#7F77DD',
+  'Ariana':'#1D9E75','Ben Arous':'#D4537E','La Marsa':'#378ADD',
+};
+
+// ── Helper : vérifie que la réponse API est prête ────────────
+function _assertReady(d, status) {
+  if (d && d.error)   throw new Error(d.error);
+  if (status === 202 || (d && d.status === 'loading'))
+    throw new Error('Modèles en cours de chargement — réessayez dans quelques secondes');
+  if (status === 503 || (d && d.status === 'not_started'))
+    throw new Error('Module Molka non initialisé — vérifiez server.py');
+}
+
+// ── Status bar ────────────────────────────────────────────────
+async function checkStatus() {
+  try {
+    const r = await fetch(`${API}/molka/health`, { signal: AbortSignal.timeout(4000) });
+    const d = await r.json();
+    const dot = document.getElementById('statusDot');
+    const txt = document.getElementById('statusTxt');
+    if (d.ready) {
+      dot.className = 'dot dot-ok';
+      txt.textContent = `Module Molka prêt · ${(d.quartiers||[]).length} quartiers`;
+    } else if (d.loading) {
+      dot.className = 'dot dot-warn';
+      txt.textContent = 'Chargement SARIMAX + Q-Learning en cours…';
+      setTimeout(checkStatus, 4000);
+    } else {
+      dot.className = 'dot dot-err';
+      txt.textContent = d.error || 'Module non prêt';
+    }
+  } catch (e) {
+    document.getElementById('statusDot').className = 'dot dot-err';
+    document.getElementById('statusTxt').textContent = 'Serveur inaccessible (port 8080)';
+  }
+}
+
+// ── Tab switching ─────────────────────────────────────────────
+function switchTab(name) {
+  currentTab = name;
+  ['forecast','stl','metrics'].forEach(t => {
+    document.getElementById(`tab${t.charAt(0).toUpperCase()+t.slice(1)}`).style.display = t === name ? '' : 'none';
+  });
+  document.querySelectorAll('.chart-tab').forEach((el, i) => {
+    el.classList.toggle('active', ['forecast','stl','metrics'][i] === name);
+  });
+}
+
+// ── Forecast ─────────────────────────────────────────────────
+async function runForecast() {
+  const btn = document.getElementById('btnForecast');
+  btn.disabled = true;
+  btn.textContent = 'Calcul…';
+
+  currentQuartier = document.getElementById('selQuartier').value;
+  const sp  = document.getElementById('spForecast');
+  const div = document.getElementById('chartForecast');
+  sp.style.display  = 'flex';
+  sp.querySelector('span').textContent = 'Entraînement SARIMAX…';
+  div.style.display = 'none';
+  switchTab('forecast');
+
+  try {
+    const r = await fetch(`${API}/molka/sarimax`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ quartier: currentQuartier }),
+    });
+    const d = await r.json();
+    _assertReady(d, r.status);
+
+    if (!d.dates || !d.mean || !d.historique)
+      throw new Error('Réponse API incomplète — données manquantes');
+
+    renderForecast(d);
+    renderStats(d);
+    await runStl(currentQuartier);
+  } catch(e) {
+    sp.innerHTML = `<div class="err-box">❌ ${e.message}</div>`;
+    sp.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '📈 Lancer SARIMAX';
+  }
+}
+
+function renderForecast(d) {
+  const sp  = document.getElementById('spForecast');
+  const div = document.getElementById('chartForecast');
+  const col = COLORS[d.quartier] || '#FFB800';
+
+  const histDates = (d.historique && d.historique.dates)   || [];
+  const histVals  = (d.historique && d.historique.valeurs) || [];
+  const futDates  = d.dates  || [];
+  const mean      = d.mean   || [];
+  const ci_lo     = d.ci_lo  || [];
+  const ci_hi     = d.ci_hi  || [];
+
+  const traces = [
+    {
+      x: histDates, y: histVals, name: 'Historique',
+      type: 'scatter', mode: 'lines',
+      line: { color: '#666666', width: 1.5 },
+    },
+    {
+      x: futDates.concat([...futDates].reverse()),
+      y: ci_hi.concat([...ci_lo].reverse()),
+      fill: 'toself',
+      fillcolor: col + '20',
+      line: { color: 'transparent' }, name: 'IC 95%', showlegend: true,
+      hoverinfo: 'skip',
+    },
+    {
+      x: futDates, y: mean, name: `Prévision — ${d.quartier}`,
+      type: 'scatter', mode: 'lines+markers',
+      line: { color: col, width: 2.5 },
+      marker: { size: 4, color: col },
+    },
+  ];
+
+  const lastHist = histDates.length ? histDates[histDates.length - 1] : null;
+  const layout = {
+    ...LAYOUT_BASE,
+    title: { text: `SARIMAX — ${d.quartier} · 26 semaines`, font:{size:13,color:'#fff'}, x:0.01 },
+    xaxis: { ...LAYOUT_BASE.xaxis, title: '' },
+    yaxis: { ...LAYOUT_BASE.yaxis, title: 'Densité (ch/km²)' },
+    shapes: lastHist ? [{
+      type: 'line', x0: lastHist, x1: lastHist,
+      y0: 0, y1: 1, yref: 'paper',
+      line: { color: '#FFB800', width: 1, dash: 'dot' }
+    }] : [],
+    annotations: lastHist ? [{
+      x: lastHist, y: 1, yref: 'paper',
+      text: 'Aujourd\'hui', showarrow: false,
+      font: { family: 'Space Mono', size: 9, color: '#FFB800' },
+      xanchor: 'left', yanchor: 'top',
+    }] : [],
+    height: 350,
+  };
+
+  Plotly.newPlot(div, traces, layout, {responsive:true, displayModeBar:false});
+  sp.style.display  = 'none';
+  div.style.display = 'block';
+}
+
+function renderStats(d) {
+  const sec   = document.getElementById('statsSection');
+  const cards = document.getElementById('statsCards');
+  sec.style.display = '';
+
+  const mean     = d.mean || [];
+  const lastMean = mean.length ? mean[mean.length - 1] : 0;
+  const trend    = lastMean > (mean[0] || 0) ? '▲' : '▼';
+  const trendCol = lastMean > (mean[0] || 0) ? '#EF4444' : '#22C55E';
+
+  cards.innerHTML = `
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-val">${d.mae}</div>
+        <div class="stat-lbl">MAE</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val">${d.rmse}</div>
+        <div class="stat-lbl">RMSE</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val">${d.aic}</div>
+        <div class="stat-lbl">AIC</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" style="color:${trendCol}">${trend} ${Math.abs((lastMean - d.mean[0])).toFixed(1)}</div>
+        <div class="stat-lbl">Δ densité 26s</div>
+      </div>
+    </div>`;
+}
+
+// ── STL ───────────────────────────────────────────────────────
+async function runStl(quartier) {
+  const sp  = document.getElementById('spStl');
+  const div = document.getElementById('chartStl');
+  sp.style.display = 'flex';
+  sp.querySelector('span').textContent = 'Décomposition STL…';
+  div.style.display = 'none';
+
+  try {
+    const r = await fetch(`${API}/molka/stl/${encodeURIComponent(quartier)}`);
+    const d = await r.json();
+    _assertReady(d, r.status);
+    if (!d.dates) throw new Error('Données STL manquantes');
+    renderStl(d);
+  } catch(e) {
+    sp.innerHTML = `<div class="err-box">❌ ${e.message}</div>`;
+    sp.style.display = 'block';
+  }
+}
+
+function renderStl(d) {
+  const sp  = document.getElementById('spStl');
+  const div = document.getElementById('chartStl');
+  const col = COLORS[d.quartier] || '#FFB800';
+
+  const traces = [
+    { x:d.dates, y:d.observed, name:'Observé',  type:'scatter', mode:'lines', line:{color:'#666',width:1}, yaxis:'y1' },
+    { x:d.dates, y:d.trend,    name:'Tendance', type:'scatter', mode:'lines', line:{color:col, width:2},   yaxis:'y2' },
+    { x:d.dates, y:d.seasonal, name:'Saisonnalité', type:'scatter', mode:'lines', line:{color:'#7F77DD',width:1.2}, yaxis:'y3' },
+    { x:d.dates, y:d.resid,    name:'Résidu',   type:'scatter', mode:'lines', line:{color:'#1D9E75',width:1}, yaxis:'y4' },
+  ];
+
+  const layout = {
+    ...LAYOUT_BASE,
+    title: { text: `STL — ${d.quartier}`, font:{size:13,color:'#fff'}, x:0.01 },
+    grid: { rows:4, columns:1, pattern:'independent' },
+    yaxis:  { ...LAYOUT_BASE.yaxis, domain:[0.78,1.00], title:{text:'Observé',font:{size:9,color:'#666'}} },
+    yaxis2: { ...LAYOUT_BASE.yaxis, domain:[0.52,0.74], title:{text:'Tendance',font:{size:9,color:'#666'}} },
+    yaxis3: { ...LAYOUT_BASE.yaxis, domain:[0.26,0.48], title:{text:'Saisonnalité',font:{size:9,color:'#666'}} },
+    yaxis4: { ...LAYOUT_BASE.yaxis, domain:[0.00,0.22], title:{text:'Résidu',font:{size:9,color:'#666'}} },
+    height: 600,
+    showlegend: false,
+  };
+
+  Plotly.newPlot(div, traces, layout, {responsive:true, displayModeBar:false});
+  sp.style.display  = 'none';
+  div.style.display = 'block';
+}
+
+// ── All metrics ───────────────────────────────────────────────
+async function loadMetrics() {
+  const btn = document.getElementById('btnAllMetrics');
+  btn.disabled = true;
+  btn.textContent = 'Chargement…';
+  switchTab('metrics');
+
+  const sp  = document.getElementById('spMetrics');
+  const div = document.getElementById('chartMetrics');
+  sp.style.display = 'flex';
+  sp.querySelector('span').textContent = 'Récupération des métriques…';
+  div.style.display = 'none';
+
+  try {
+    const r = await fetch(`${API}/molka/metrics`);
+    const d = await r.json();
+    _assertReady(d, r.status);
+    if (!d.metrics) throw new Error('Métriques indisponibles');
+    renderMetrics(d.metrics);
+  } catch(e) {
+    sp.innerHTML = `<div class="err-box">❌ ${e.message}</div>`;
+    sp.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '📊 Toutes les métriques';
+  }
+}
+
+function renderMetrics(metrics) {
+  const sp  = document.getElementById('spMetrics');
+  const div = document.getElementById('chartMetrics');
+
+  const quartiers = Object.keys(metrics);
+  const maes  = quartiers.map(q => metrics[q].mae);
+  const rmses = quartiers.map(q => metrics[q].rmse);
+  const aics  = quartiers.map(q => metrics[q].aic);
+  const cols  = quartiers.map(q => COLORS[q] || '#FFB800');
+
+  const traces = [
+    { name:'MAE',  x:quartiers, y:maes,  type:'bar', marker:{color:cols}, yaxis:'y1' },
+    { name:'RMSE', x:quartiers, y:rmses, type:'bar', marker:{color:cols, opacity:0.6}, yaxis:'y1' },
+    { name:'AIC',  x:quartiers, y:aics,  type:'scatter', mode:'lines+markers',
+      line:{color:'#FFB800',width:2}, marker:{color:'#FFB800',size:8}, yaxis:'y2' },
+  ];
+
+  const layout = {
+    ...LAYOUT_BASE,
+    title: { text: 'Métriques SARIMAX — Tous les quartiers', font:{size:13,color:'#fff'}, x:0.01 },
+    barmode: 'group',
+    yaxis:  { ...LAYOUT_BASE.yaxis, title:'MAE / RMSE (ch/km²)' },
+    yaxis2: { ...LAYOUT_BASE.yaxis, title:'AIC', overlaying:'y', side:'right',
+              tickfont:{size:10,color:'#FFB800'} },
+    height: 350,
+    legend: { ...LAYOUT_BASE.legend, orientation:'h', y:1.12 },
+  };
+
+  Plotly.newPlot(div, traces, layout, {responsive:true, displayModeBar:false});
+  sp.style.display  = 'none';
+  div.style.display = 'block';
+}
+
+// ── PostMessage relay (cursor DOGSIM-TN) ─────────────────────
+document.addEventListener('mousemove', e => {
+  try { window.parent.postMessage({_dogSim:'move',x:e.clientX,y:e.clientY},'*'); } catch(_){}
+});
+document.addEventListener('mouseleave', () => {
+  try { window.parent.postMessage({_dogSim:'leave'},'*'); } catch(_){}
+});
+
+// ── Init ──────────────────────────────────────────────────────
+checkStatus();
+</script>
+</body>
+</html>

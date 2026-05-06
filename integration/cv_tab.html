@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CV Module — Feeding Infraction Detector — DOGSIM-TN</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --y:#FFB800;--b:#060606;--w:#FFFFFF;
+  --dg:#111111;--mg:#1E1E1E;--tg:#666666;
+  --border:#1A1A1A;
+  --fh:'Syne',sans-serif;--fb:'Inter',sans-serif;--fm:'Space Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow-x:hidden;background:var(--b);color:var(--w);font-family:var(--fb);-webkit-font-smoothing:antialiased}
+
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:var(--b)}
+::-webkit-scrollbar-thumb{background:var(--y)}
+
+/* ── API status bar ── */
+.api-bar{
+  background:var(--dg);border-bottom:1px solid var(--border);
+  padding:8px 16px;display:flex;align-items:center;gap:8px;font-family:var(--fm);
+  font-size:10px;color:var(--tg);letter-spacing:.08em;flex-shrink:0;
+}
+.api-bar .module-tag{
+  font-family:var(--fm);font-size:9px;font-weight:700;letter-spacing:.14em;
+  color:var(--b);background:var(--y);padding:2px 7px;border-radius:2px;margin-right:6px;
+}
+.dot{width:7px;height:7px;border-radius:50%}
+.dot-ok{background:#22C55E}.dot-err{background:#EF4444}.dot-idle{background:var(--tg)}
+
+/* ── Layout ── */
+.layout{display:grid;grid-template-columns:380px 1fr;align-items:start;min-height:calc(100vh - 37px)}
+
+/* ── Sidebar ── */
+.sidebar{
+  background:var(--dg);border-right:1px solid var(--border);
+  padding:16px 14px;
+  position:sticky;top:37px;
+  height:calc(100vh - 37px);
+  overflow-y:auto;
+}
+
+.sec{
+  font-family:var(--fm);font-size:8px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.2em;color:rgba(255,184,0,.5);margin:20px 0 8px;
+  display:flex;align-items:center;gap:8px;
+}
+.sec::before{content:'';width:16px;height:1px;background:var(--y);opacity:.4}
+.sec:first-child{margin-top:0}
+
+/* ── Tabs ── */
+.tabs{display:flex;gap:4px;margin-bottom:12px}
+.tab{
+  flex:1;padding:6px;border:1px solid var(--border);border-radius:2px;background:var(--mg);
+  color:var(--tg);font-family:var(--fm);font-size:9px;font-weight:700;cursor:pointer;
+  text-align:center;transition:all .15s;letter-spacing:.08em;text-transform:uppercase;
+}
+.tab.active{background:var(--y);border-color:var(--y);color:var(--b)}
+.tab:hover:not(.active){border-color:var(--tg);color:var(--w)}
+
+/* ── Panels ── */
+.panel{display:none}
+.panel.active{display:block}
+
+/* ── Fields ── */
+.field{margin-bottom:10px}
+.field label{
+  display:block;font-family:var(--fm);font-size:9px;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--tg);margin-bottom:4px;
+}
+.field input,.field select{
+  width:100%;background:var(--mg);border:1px solid var(--border);
+  color:var(--w);border-radius:2px;padding:8px 10px;
+  font-size:.82rem;font-family:var(--fb);
+  outline:none;transition:border .15s;
+}
+.field input:focus,.field select:focus{border-color:var(--y)}
+.field select option{background:var(--mg)}
+.hint-box{
+  background:rgba(255,184,0,.04);border:1px solid rgba(255,184,0,.15);
+  border-radius:2px;padding:9px 10px;
+  font-family:var(--fm);font-size:9px;color:var(--tg);letter-spacing:.04em;
+  line-height:1.7;margin-bottom:10px;
+}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
+/* ── Drop zone ── */
+.dropzone{
+  border:1px dashed rgba(255,184,0,.25);border-radius:2px;padding:22px 16px;
+  text-align:center;cursor:pointer;transition:all .2s;margin-bottom:8px;
+  background:rgba(255,184,0,.02);
+}
+.dropzone:hover,.dropzone.drag-over{border-color:var(--y);background:rgba(255,184,0,.05)}
+.dropzone .dz-icon{font-size:1.8rem;margin-bottom:8px}
+.dropzone p{font-family:var(--fm);font-size:9px;color:var(--tg);letter-spacing:.04em;line-height:1.7}
+.file-name{font-family:var(--fm);font-size:.75rem;color:#22C55E;margin-top:6px;word-break:break-all}
+#fileInput{display:none}
+
+/* ── Run button ── */
+.btn-run{
+  width:100%;padding:12px;margin-top:14px;
+  background:var(--y);color:var(--b);border:none;border-radius:2px;
+  font-family:var(--fm);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.btn-run:hover:not(:disabled){background:#E6A500;transform:translateY(-1px)}
+.btn-run:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+/* ── Progress ── */
+.progress-box{
+  background:var(--mg);border:1px solid var(--border);border-radius:2px;
+  padding:12px;margin-top:14px;display:none;
+}
+.progress-box.visible{display:block}
+.progress-title{font-family:var(--fm);font-size:8px;font-weight:700;letter-spacing:.12em;
+  text-transform:uppercase;color:rgba(255,184,0,.5);margin-bottom:8px}
+.progress-bar-track{background:var(--b);border-radius:2px;height:3px;overflow:hidden}
+.progress-bar{
+  background:var(--y);height:100%;width:0%;border-radius:2px;transition:width .4s;
+  animation:pulse 1.5s infinite;
+}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.progress-bar.done{animation:none;background:#22C55E;width:100%!important}
+.progress-bar.error{animation:none;background:#EF4444}
+.progress-msg{font-family:var(--fm);font-size:9px;color:var(--tg);margin-top:6px;letter-spacing:.04em}
+
+/* ── Main area ── */
+.main{padding:24px;display:flex;flex-direction:column;gap:16px;background:var(--b)}
+
+/* ── Placeholder ── */
+.placeholder{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:60vh;color:var(--tg);text-align:center;gap:12px;
+}
+.placeholder .big-icon{font-size:3.5rem;filter:grayscale(1);opacity:.4}
+.placeholder h2{font-family:var(--fh);font-size:1rem;color:var(--tg);font-weight:700}
+.placeholder p{font-family:var(--fm);font-size:9px;max-width:320px;line-height:1.8;
+  color:rgba(255,255,255,.2);letter-spacing:.04em}
+
+/* ── Results header ── */
+.results-header{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.results-header h2{font-family:var(--fh);font-size:1.05rem;font-weight:700}
+.badge-count{
+  background:rgba(255,184,0,.12);border:1px solid rgba(255,184,0,.35);color:var(--y);
+  font-family:var(--fm);font-size:8px;font-weight:700;letter-spacing:.1em;
+  padding:3px 9px;border-radius:2px;text-transform:uppercase;
+}
+.badge-none{
+  background:var(--mg);border:1px solid var(--border);color:var(--tg);
+  font-family:var(--fm);font-size:8px;padding:3px 9px;border-radius:2px;text-transform:uppercase;
+}
+
+/* ── Infraction card ── */
+.infraction-card{
+  background:var(--dg);border:1px solid var(--border);border-radius:2px;overflow:hidden;
+  margin-bottom:16px;
+}
+.card-header{
+  background:rgba(255,184,0,.05);border-bottom:1px solid var(--border);
+  padding:12px 16px;display:flex;align-items:center;gap:12px;
+}
+.inf-id{
+  font-family:var(--fm);font-size:8px;letter-spacing:.1em;color:rgba(255,184,0,.5);
+  text-transform:uppercase;margin-bottom:3px;
+}
+.inf-title{font-family:var(--fh);font-size:.88rem;font-weight:700}
+.found-badge{
+  margin-left:auto;font-family:var(--fm);font-size:8px;font-weight:700;
+  padding:3px 9px;border-radius:2px;letter-spacing:.08em;text-transform:uppercase;
+}
+.found-yes{background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);color:#22C55E}
+.found-no{background:var(--mg);border:1px solid var(--border);color:var(--tg)}
+
+/* ── Card meta ── */
+.card-meta{
+  display:flex;gap:20px;padding:10px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap;
+}
+.meta-item{font-size:.74rem}
+.meta-label{font-family:var(--fm);font-size:8px;color:var(--tg);letter-spacing:.06em;text-transform:uppercase}
+.meta-val{color:var(--w);font-weight:600;margin-left:4px;font-family:var(--fm);font-size:.78rem}
+
+/* ── 3 frames grid ── */
+.frames-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0}
+.frame-slot{padding:12px;border-right:1px solid var(--border)}
+.frame-slot:last-child{border-right:none}
+.frame-label{
+  font-family:var(--fm);font-size:8px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.1em;margin-bottom:8px;display:flex;gap:6px;align-items:center;
+}
+.lbl-approach{color:#22C55E}
+.lbl-deposit{color:#EF4444}
+.lbl-departure{color:#A78BFA}
+.frame-slot img{
+  width:100%;border-radius:2px;object-fit:cover;cursor:pointer;
+  transition:opacity .15s;border:1px solid var(--border);
+}
+.frame-slot img:hover{opacity:.8}
+.no-frame{
+  width:100%;aspect-ratio:16/9;background:var(--b);border-radius:2px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--fm);font-size:8px;color:var(--tg);letter-spacing:.06em;
+  border:1px dashed var(--border);
+}
+.card-notes{
+  padding:8px 16px;font-family:var(--fm);font-size:9px;color:var(--tg);
+  border-top:1px solid var(--border);letter-spacing:.04em;
+}
+
+/* ── Séparateur modules ── */
+.module-sep{
+  border:none;border-top:1px solid var(--border);
+  margin:16px 0 12px;
+}
+.module-label{
+  font-family:var(--fm);font-size:8px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.18em;color:rgba(255,184,0,.4);margin-bottom:8px;
+  display:flex;align-items:center;gap:8px;
+}
+.module-label::before{content:'';width:12px;height:1px;background:rgba(255,184,0,.3)}
+
+/* ── Bouton agression ── */
+.btn-aggr{
+  width:100%;padding:12px;margin-top:6px;
+  background:rgba(226,75,74,.12);color:#E24B4A;
+  border:1px solid rgba(226,75,74,.3);border-radius:2px;
+  font-family:var(--fm);font-size:11px;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;
+  cursor:pointer;transition:all .2s;display:flex;align-items:center;
+  justify-content:center;gap:8px;
+}
+.btn-aggr:hover:not(:disabled){background:rgba(226,75,74,.22);border-color:#E24B4A}
+.btn-aggr:disabled{opacity:.4;cursor:not-allowed}
+
+/* ── Card agression ── */
+.aggr-section-title{
+  font-family:var(--fh);font-size:.95rem;font-weight:700;
+  margin-bottom:16px;display:flex;align-items:center;gap:10px;
+}
+.aggr-card{
+  background:var(--dg);border:1px solid var(--border);border-radius:2px;
+  overflow:hidden;margin-bottom:14px;
+}
+.aggr-card-header{
+  background:rgba(226,75,74,.05);border-bottom:1px solid var(--border);
+  padding:10px 14px;display:flex;align-items:center;gap:10px;
+}
+.aggr-id{font-family:var(--fm);font-size:8px;letter-spacing:.1em;
+  color:rgba(226,75,74,.6);text-transform:uppercase;margin-bottom:2px}
+.aggr-title{font-family:var(--fh);font-size:.84rem;font-weight:700}
+.risk-badge{
+  margin-left:auto;font-family:var(--fm);font-size:9px;font-weight:700;
+  padding:3px 9px;border-radius:2px;letter-spacing:.08em;text-transform:uppercase;
+}
+.risk-high  {background:rgba(226,75,74,.15);border:1px solid rgba(226,75,74,.4);color:#E24B4A}
+.risk-med   {background:rgba(239,159,39,.12);border:1px solid rgba(239,159,39,.3);color:#EF9F27}
+.risk-low   {background:rgba(241,196,15,.08);border:1px solid rgba(241,196,15,.25);color:#f1c40f}
+.aggr-meta{
+  display:flex;gap:18px;padding:8px 14px;border-bottom:1px solid var(--border);flex-wrap:wrap;
+}
+.aggr-frame{padding:12px 14px}
+.aggr-frame img{
+  width:100%;max-height:220px;object-fit:cover;border-radius:2px;
+  border:1px solid var(--border);cursor:pointer;transition:opacity .15s;
+}
+.aggr-frame img:hover{opacity:.8}
+.aggr-no-frame{
+  width:100%;height:100px;background:var(--b);border-radius:2px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--fm);font-size:8px;color:var(--tg);
+  border:1px dashed var(--border);
+}
+.type-badge{
+  font-family:var(--fm);font-size:8px;font-weight:700;
+  padding:2px 7px;border-radius:2px;letter-spacing:.06em;text-transform:uppercase;
+}
+.type-h2d{background:rgba(226,75,74,.1);color:#E24B4A;border:1px solid rgba(226,75,74,.2)}
+.type-d2h{background:rgba(239,159,39,.1);color:#EF9F27;border:1px solid rgba(239,159,39,.2)}
+
+/* ── Lightbox ── */
+.lightbox{
+  display:none;position:fixed;inset:0;z-index:1000;
+  background:rgba(0,0,0,.95);align-items:center;justify-content:center;
+}
+.lightbox.open{display:flex}
+.lightbox img{
+  max-width:92vw;max-height:88vh;border-radius:2px;
+  box-shadow:0 0 80px rgba(0,0,0,.9);
+}
+.lightbox-close{
+  position:absolute;top:16px;right:20px;
+  font-family:var(--fm);font-size:.9rem;color:var(--tg);cursor:pointer;
+  background:var(--mg);border:1px solid var(--border);border-radius:2px;
+  padding:4px 10px;letter-spacing:.1em;transition:all .15s;
+}
+.lightbox-close:hover{border-color:var(--y);color:var(--y)}
+</style>
+</head>
+<body>
+
+<!-- API status bar -->
+<div class="api-bar">
+  <span class="module-tag">CV</span>
+  <div class="dot dot-idle" id="apiDot"></div>
+  <span id="apiLabel">Vérification API...</span>
+</div>
+
+<div class="layout">
+
+  <!-- ══ SIDEBAR ══════════════════════════════════════════ -->
+  <aside class="sidebar">
+
+    <div class="sec">Source vidéo</div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('yt')">▶ YouTube</button>
+      <button class="tab"        onclick="switchTab('local')">⊞ Fichier local</button>
+    </div>
+
+    <!-- Tab YouTube -->
+    <div class="panel active" id="panel-yt">
+      <div class="hint-box">
+        Collez l'URL d'une vidéo YouTube montrant des gens dans la rue ou un parc avec des chiens.
+      </div>
+      <div class="field">
+        <label>URL YouTube</label>
+        <input type="url" id="ytUrl"
+               placeholder="https://www.youtube.com/watch?v=..."
+               oninput="validateYT()">
+      </div>
+    </div>
+
+    <!-- Tab Local -->
+    <div class="panel" id="panel-local">
+      <div class="dropzone" id="dropzone"
+           onclick="document.getElementById('fileInput').click()"
+           ondragover="onDragOver(event)"
+           ondragleave="onDragLeave(event)"
+           ondrop="onDrop(event)">
+        <div class="dz-icon">📹</div>
+        <p>Cliquez ou glissez-déposez votre vidéo<br>MP4 · AVI · MOV · MKV acceptés</p>
+        <div class="file-name" id="fileName"></div>
+      </div>
+      <input type="file" id="fileInput" accept="video/*" onchange="onFileSelect(event)">
+    </div>
+
+    <div class="sec">Paramètres</div>
+
+    <div class="field">
+      <label>ID Caméra</label>
+      <input type="text" id="cameraId" value="CAM_001" placeholder="CAM_001">
+    </div>
+
+    <div class="g2">
+      <div class="field">
+        <label>Frames max <span style="font-size:8px;opacity:.5">(0 = tout)</span></label>
+        <input type="number" id="maxFrames" value="600" min="0" step="100">
+      </div>
+      <div class="field">
+        <label>Stagnation min (s)</label>
+        <input type="number" id="stationSec" value="8" min="1" max="60" step="1">
+      </div>
+    </div>
+
+    <!-- Bouton lancer -->
+    <button class="btn-run" id="runBtn" onclick="launchAnalysis()" disabled>
+      <span id="btn-icon">▶</span>
+      <span id="btn-label">Lancer l'analyse</span>
+    </button>
+
+    <!-- Progress nourrissage -->
+    <div class="progress-box" id="progressBox">
+      <div class="progress-title">Progression — Nourrissage</div>
+      <div class="progress-bar-track">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <div class="progress-msg" id="progressMsg">En attente...</div>
+    </div>
+
+    <!-- Séparateur module Adham -->
+    <hr class="module-sep">
+    <div class="module-label">Module Adham — Agression</div>
+
+    <!-- Bouton agression -->
+    <button class="btn-aggr" id="aggrBtn" onclick="launchAggressionAnalysis()" disabled>
+      <span id="aggr-icon">🐾</span>
+      <span id="aggr-label">Lancer l'analyse agression</span>
+    </button>
+
+    <!-- Progress agression -->
+    <div class="progress-box" id="aggrProgressBox">
+      <div class="progress-title">Progression — Agression</div>
+      <div class="progress-bar-track">
+        <div class="progress-bar" id="aggrProgressBar"></div>
+      </div>
+      <div class="progress-msg" id="aggrProgressMsg">En attente...</div>
+    </div>
+
+  </aside>
+
+  <!-- ══ MAIN ═════════════════════════════════════════════ -->
+  <main class="main" id="mainArea">
+
+    <div class="placeholder" id="placeholder">
+      <div class="big-icon">🎥</div>
+      <h2>Aucune analyse lancée</h2>
+      <p>Choisissez une source vidéo, configurez les paramètres, puis lancez l'analyse.</p>
+    </div>
+
+    <div id="resultsArea" style="display:none">
+      <div class="results-header">
+        <h2>Résultats — Nourrissage</h2>
+        <span id="resultsBadge" class="badge-none">–</span>
+      </div>
+      <div id="infractionsContainer"></div>
+    </div>
+
+    <!-- ── Résultats agression ── -->
+    <div id="aggrResultsArea" style="display:none">
+      <div class="results-header" style="margin-top:20px">
+        <h2 class="aggr-section-title">
+          <span style="color:#E24B4A">⚠</span> Résultats — Agression
+        </h2>
+        <span id="aggrBadge" class="badge-none">–</span>
+      </div>
+      <div id="aggrContainer"></div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">✕ FERMER</button>
+  <img id="lightboxImg" src="" alt="">
+</div>
+
+<script>
+const API = "http://localhost:8080";
+let currentTab        = "yt";
+let selectedFile      = null;
+let pollInterval      = null;
+let currentJobId      = null;
+let aggrPollInterval  = null;
+let aggrJobId         = null;
+
+// ── Health check ──────────────────────────────────────────
+async function checkHealth() {
+  try {
+    const [rCV, rAG] = await Promise.all([
+      fetch(`${API}/cv/health`).then(r => r.json()).catch(() => null),
+      fetch(`${API}/aggression/health`).then(r => r.json()).catch(() => null),
+    ]);
+    const cvOk   = rCV  && rCV.status  === 'ok';
+    const aggrOk = rAG  && rAG.status  === 'ok';
+    document.getElementById("apiDot").className =
+      (cvOk || aggrOk) ? "dot dot-ok" : "dot dot-err";
+    document.getElementById("apiLabel").textContent =
+      `CV: ${cvOk ? "✓" : "✗"}  Agression: ${aggrOk ? "✓" : "✗"}  YOLO: ${(rCV?.yolo || rAG?.yolo) ? "✓" : "✗"}`;
+  } catch {
+    document.getElementById("apiDot").className = "dot dot-err";
+    document.getElementById("apiLabel").textContent = "API hors ligne";
+  }
+}
+
+// ── Tabs ──────────────────────────────────────────────────
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll(".tab").forEach((b, i) => {
+    b.classList.toggle("active", (tab === "yt" && i === 0) || (tab === "local" && i === 1));
+  });
+  document.getElementById("panel-yt").classList.toggle("active", tab === "yt");
+  document.getElementById("panel-local").classList.toggle("active", tab === "local");
+  validateBtn();
+}
+
+// ── File handling ─────────────────────────────────────────
+function onFileSelect(e) {
+  const f = e.target.files[0];
+  if (!f) return;
+  selectedFile = f;
+  document.getElementById("fileName").textContent = `✓ ${f.name} (${(f.size/1e6).toFixed(1)} Mo)`;
+  validateBtn();
+}
+function onDragOver(e)  { e.preventDefault(); document.getElementById("dropzone").classList.add("drag-over"); }
+function onDragLeave(e) { document.getElementById("dropzone").classList.remove("drag-over"); }
+function onDrop(e) {
+  e.preventDefault();
+  document.getElementById("dropzone").classList.remove("drag-over");
+  const f = e.dataTransfer.files[0];
+  if (f && f.type.startsWith("video/")) {
+    selectedFile = f;
+    document.getElementById("fileName").textContent = `✓ ${f.name} (${(f.size/1e6).toFixed(1)} Mo)`;
+    validateBtn();
+  }
+}
+
+// ── Validation ────────────────────────────────────────────
+function validateYT() { validateBtn(); }
+function validateBtn() {
+  const ok = (currentTab === "yt" && document.getElementById("ytUrl").value.trim())
+          || (currentTab === "local" && selectedFile);
+  document.getElementById("runBtn").disabled  = !ok;
+  document.getElementById("aggrBtn").disabled = !ok;
+}
+
+// ── Progress UI ───────────────────────────────────────────
+function setProgress(msg, pct, state) {
+  const box = document.getElementById("progressBox");
+  const bar = document.getElementById("progressBar");
+  box.classList.add("visible");
+  document.getElementById("progressMsg").textContent = msg;
+  bar.style.width = pct + "%";
+  bar.className   = "progress-bar" + (state === "done" ? " done" : state === "error" ? " error" : "");
+}
+
+// ── Launch ────────────────────────────────────────────────
+async function launchAnalysis() {
+  if (pollInterval) clearInterval(pollInterval);
+
+  const btn       = document.getElementById("runBtn");
+  const cameraId  = document.getElementById("cameraId").value.trim() || "CAM_001";
+  const maxFrames = parseInt(document.getElementById("maxFrames").value) || 0;
+
+  btn.disabled = true;
+  document.getElementById("btn-icon").textContent  = '⏳';
+  document.getElementById("btn-label").textContent = 'Analyse en cours...';
+  document.getElementById("placeholder").style.display = "none";
+  document.getElementById("resultsArea").style.display  = "none";
+  document.getElementById("infractionsContainer").innerHTML = "";
+  setProgress("Envoi de la vidéo...", 10, "running");
+
+  try {
+    let jobId;
+
+    if (currentTab === "yt") {
+      const url = document.getElementById("ytUrl").value.trim();
+      const res = await fetch(`${API}/cv/youtube`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url, camera_id: cameraId, max_frames: maxFrames || null })
+      });
+      const d = await res.json();
+      if (d.error) throw new Error(d.error);
+      jobId = d.job_id;
+
+    } else {
+      const form = new FormData();
+      form.append("video",      selectedFile);
+      form.append("camera_id",  cameraId);
+      if (maxFrames) form.append("max_frames", maxFrames);
+      const res = await fetch(`${API}/cv/upload`, { method: "POST", body: form });
+      const d   = await res.json();
+      if (d.error) throw new Error(d.error);
+      jobId = d.job_id;
+    }
+
+    currentJobId = jobId;
+    pollJob(jobId);
+
+  } catch (err) {
+    setProgress("Erreur : " + err.message, 100, "error");
+  } finally {
+    btn.disabled = false;
+    document.getElementById("btn-icon").textContent  = '▶';
+    document.getElementById("btn-label").textContent = 'Lancer l\'analyse';
+  }
+}
+
+// ── Poll ──────────────────────────────────────────────────
+function pollJob(jobId) {
+  let dots = 0;
+  pollInterval = setInterval(async () => {
+    try {
+      const r = await fetch(`${API}/cv/job/${jobId}`);
+      const d = await r.json();
+      dots = (dots + 1) % 4;
+
+      if (d.status === "running" || d.status === "queued") {
+        setProgress(d.progress + ".".repeat(dots + 1), 50, "running");
+
+      } else if (d.status === "done") {
+        clearInterval(pollInterval);
+        setProgress(`Terminé — ${d.infraction_count} infraction(s) détectée(s)`, 100, "done");
+        renderResults(d);
+        document.getElementById("runBtn").disabled = false;
+
+      } else if (d.status === "error") {
+        clearInterval(pollInterval);
+        setProgress("Erreur : " + d.error, 100, "error");
+        document.getElementById("runBtn").disabled = false;
+      }
+    } catch {
+      // API temporairement injoignable, on réessaie
+    }
+  }, 2000);
+}
+
+// ── Render results ────────────────────────────────────────
+function renderResults(data) {
+  const area      = document.getElementById("resultsArea");
+  const container = document.getElementById("infractionsContainer");
+  const badge     = document.getElementById("resultsBadge");
+
+  area.style.display = "block";
+  const count = data.infraction_count || 0;
+
+  badge.textContent = count > 0 ? `${count} infraction(s)` : "Aucune infraction";
+  badge.className   = count > 0 ? "badge-count" : "badge-none";
+
+  if (count === 0) {
+    container.innerHTML = `
+      <div style="text-align:center;padding:60px 20px;color:var(--tg)">
+        <div style="font-size:2.5rem;margin-bottom:12px;filter:grayscale(1);opacity:.5">✅</div>
+        <p style="font-family:var(--fm);font-size:9px;letter-spacing:.06em">
+          AUCUNE INFRACTION DÉTECTÉE DANS CETTE VIDÉO
+        </p>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = data.results.map((r, i) => `
+    <div class="infraction-card">
+      <div class="card-header">
+        <div>
+          <div class="inf-id">${r.infraction_id}</div>
+          <div class="inf-title">Infraction #${i+1} — Chien #${r.dog_track_id}</div>
+        </div>
+        <span class="found-badge ${r.human_found ? 'found-yes' : 'found-no'}">
+          ${r.human_found ? '✓ Suspect identifié' : '? Suspect non trouvé'}
+        </span>
+      </div>
+
+      <div class="card-meta">
+        <div class="meta-item">
+          <span class="meta-label">Caméra</span>
+          <span class="meta-val">${r.camera_id}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Stagnation chien</span>
+          <span class="meta-val">${r.stagnation_seconds?.toFixed(1)}s</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Dépôt avant arrivée</span>
+          <span class="meta-val">${r.seconds_before_dog != null ? r.seconds_before_dog.toFixed(0)+'s' : '—'}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Distance au plat</span>
+          <span class="meta-val">${r.distance_at_deposit != null ? Math.round(r.distance_at_deposit)+'px' : '—'}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Timestamp</span>
+          <span class="meta-val">${new Date(r.timestamp).toLocaleString('fr-FR')}</span>
+        </div>
+      </div>
+
+      <div class="frames-grid">
+        <div class="frame-slot">
+          <div class="frame-label lbl-approach">
+            <span>👤</span> Approche — Visage visible
+          </div>
+          ${r.frames.approach
+            ? `<img src="${r.frames.approach}" onclick="openLightbox(this.src)" alt="Approche">`
+            : `<div class="no-frame">Aucune frame</div>`}
+        </div>
+        <div class="frame-slot">
+          <div class="frame-label lbl-deposit">
+            <span>🍽️</span> Dépôt du plat — Action
+          </div>
+          ${r.frames.deposit
+            ? `<img src="${r.frames.deposit}" onclick="openLightbox(this.src)" alt="Dépôt">`
+            : `<div class="no-frame">Aucune frame</div>`}
+        </div>
+        <div class="frame-slot">
+          <div class="frame-label lbl-departure">
+            <span>🚶</span> Départ — Avant le chien
+          </div>
+          ${r.frames.departure
+            ? `<img src="${r.frames.departure}" onclick="openLightbox(this.src)" alt="Départ">`
+            : `<div class="no-frame">Aucune frame</div>`}
+        </div>
+      </div>
+
+      ${r.notes ? `<div class="card-notes">${r.notes}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+// ── Lightbox ──────────────────────────────────────────────
+function openLightbox(src) {
+  document.getElementById("lightboxImg").src = src;
+  document.getElementById("lightbox").classList.add("open");
+}
+function closeLightbox() {
+  document.getElementById("lightbox").classList.remove("open");
+}
+
+// ── Agression : progress ──────────────────────────────────
+function setAggrProgress(msg, pct, state) {
+  const box = document.getElementById("aggrProgressBox");
+  const bar = document.getElementById("aggrProgressBar");
+  box.classList.add("visible");
+  document.getElementById("aggrProgressMsg").textContent = msg;
+  bar.style.width = pct + "%";
+  bar.className   = "progress-bar"
+    + (state === "done" ? " done" : state === "error" ? " error" : "");
+}
+
+// ── Agression : lancer ────────────────────────────────────
+async function launchAggressionAnalysis() {
+  if (aggrPollInterval) clearInterval(aggrPollInterval);
+
+  const btn       = document.getElementById("aggrBtn");
+  const cameraId  = document.getElementById("cameraId").value.trim() || "CAM_001";
+  const maxFrames = parseInt(document.getElementById("maxFrames").value) || 0;
+
+  btn.disabled = true;
+  document.getElementById("aggr-icon").textContent  = "⏳";
+  document.getElementById("aggr-label").textContent = "Analyse en cours...";
+  document.getElementById("placeholder").style.display = "none";
+  document.getElementById("aggrResultsArea").style.display = "none";
+  document.getElementById("aggrContainer").innerHTML = "";
+  setAggrProgress("Envoi de la vidéo...", 10, "running");
+
+  try {
+    let jobId;
+
+    if (currentTab === "yt") {
+      const url = document.getElementById("ytUrl").value.trim();
+      const res = await fetch(`${API}/aggression/youtube`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ url, camera_id: cameraId, max_frames: maxFrames || null })
+      });
+      const d = await res.json();
+      if (d.error) throw new Error(d.error);
+      jobId = d.job_id;
+    } else {
+      const form = new FormData();
+      form.append("video",     selectedFile);
+      form.append("camera_id", cameraId);
+      if (maxFrames) form.append("max_frames", maxFrames);
+      const res = await fetch(`${API}/aggression/upload`, { method: "POST", body: form });
+      const d   = await res.json();
+      if (d.error) throw new Error(d.error);
+      jobId = d.job_id;
+    }
+
+    aggrJobId = jobId;
+    pollAggrJob(jobId);
+
+  } catch (err) {
+    setAggrProgress("Erreur : " + err.message, 100, "error");
+    btn.disabled = false;
+    document.getElementById("aggr-icon").textContent  = "🐾";
+    document.getElementById("aggr-label").textContent = "Lancer l'analyse agression";
+  }
+}
+
+// ── Agression : polling ───────────────────────────────────
+function pollAggrJob(jobId) {
+  let dots = 0;
+  aggrPollInterval = setInterval(async () => {
+    try {
+      const r = await fetch(`${API}/aggression/job/${jobId}`);
+      const d = await r.json();
+      dots = (dots + 1) % 4;
+
+      if (d.status === "running" || d.status === "queued") {
+        setAggrProgress(d.progress + ".".repeat(dots + 1), 50, "running");
+
+      } else if (d.status === "done") {
+        clearInterval(aggrPollInterval);
+        const n = d.event_count || 0;
+        setAggrProgress(`Terminé — ${n} agression(s) détectée(s)`, 100, "done");
+        renderAggrResults(d);
+        document.getElementById("aggrBtn").disabled = false;
+        document.getElementById("aggr-icon").textContent  = "🐾";
+        document.getElementById("aggr-label").textContent = "Lancer l'analyse agression";
+
+      } else if (d.status === "error") {
+        clearInterval(aggrPollInterval);
+        setAggrProgress("Erreur : " + d.error, 100, "error");
+        document.getElementById("aggrBtn").disabled = false;
+        document.getElementById("aggr-icon").textContent  = "🐾";
+        document.getElementById("aggr-label").textContent = "Lancer l'analyse agression";
+      }
+    } catch { /* API temporairement injoignable */ }
+  }, 2000);
+}
+
+// ── Agression : rendu ─────────────────────────────────────
+function renderAggrResults(data) {
+  const area      = document.getElementById("aggrResultsArea");
+  const container = document.getElementById("aggrContainer");
+  const badge     = document.getElementById("aggrBadge");
+  const events    = data.events || [];
+  const count     = events.length;
+
+  area.style.display = "block";
+  badge.textContent  = count > 0 ? `${count} événement(s)` : "Aucune agression";
+  badge.className    = count > 0 ? "badge-count" : "badge-none";
+
+  if (count === 0) {
+    container.innerHTML = `
+      <div style="text-align:center;padding:40px 20px;color:var(--tg)">
+        <div style="font-size:2.5rem;margin-bottom:12px;filter:grayscale(1);opacity:.5">✅</div>
+        <p style="font-family:var(--fm);font-size:9px;letter-spacing:.06em">
+          AUCUNE AGRESSION DÉTECTÉE DANS CETTE VIDÉO
+        </p>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = events.map((e, i) => {
+    const score  = e.risk_score || 0;
+    const rClass = score >= 0.65 ? 'risk-high'
+                 : score >= 0.45 ? 'risk-med'
+                 :                  'risk-low';
+    const rLabel = score >= 0.65 ? '🔴 Risque élevé'
+                 : score >= 0.45 ? '🟠 Risque modéré'
+                 :                  '🟡 Risque faible';
+    const typeClass = e.aggression_type === 'human_to_dog' ? 'type-h2d' : 'type-d2h';
+    const typeLabel = e.aggression_type === 'human_to_dog'
+                    ? '👤→🐕 Humain → Chien'
+                    : '🐕→👤 Chien → Humain';
+    const ts = e.timestamp ? new Date(e.timestamp).toLocaleString('fr-FR') : '—';
+
+    return `
+    <div class="aggr-card">
+      <div class="aggr-card-header">
+        <div>
+          <div class="aggr-id">${e.event_id || 'AGR_' + (i+1)}</div>
+          <div class="aggr-title">Événement #${i+1} — P#${e.person_track_id} · D#${e.dog_track_id}</div>
+        </div>
+        <span class="risk-badge ${rClass}">${rLabel} (${score.toFixed(2)})</span>
+      </div>
+
+      <div class="aggr-meta">
+        <div class="meta-item">
+          <span class="meta-label">Type</span>
+          <span class="type-badge ${typeClass}" style="margin-left:4px">${typeLabel}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Frame n°</span>
+          <span class="meta-val">${e.frame_number ?? '—'}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Score geste</span>
+          <span class="meta-val">${(e.gesture_score ?? 0).toFixed(3)}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Score proximité</span>
+          <span class="meta-val">${(e.proximity_score ?? 0).toFixed(3)}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Caméra</span>
+          <span class="meta-val">${e.camera_id || '—'}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Timestamp</span>
+          <span class="meta-val">${ts}</span>
+        </div>
+      </div>
+
+      <div class="aggr-frame">
+        <div class="frame-label" style="color:var(--tg);margin-bottom:8px;font-family:var(--fm);font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase">
+          Frame annotée — Score de risque
+        </div>
+        ${e.frame
+          ? `<img src="${e.frame}" onclick="openLightbox(this.src)" alt="Frame agression">`
+          : `<div class="aggr-no-frame">Frame non disponible</div>`}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Init ──────────────────────────────────────────────────
+checkHealth();
+setInterval(checkHealth, 10000);
+
+// ── Curseur custom : propager les events souris au parent DOGSIM-TN ──
+(function(){
+  document.documentElement.style.cursor = 'none';
+  document.body.style.cursor = 'none';
+  function postMove(x, y) {
+    try { window.parent.postMessage({ _dogSim: 'move', x, y }, '*'); } catch(e) {}
+  }
+  function postLeave() {
+    try { window.parent.postMessage({ _dogSim: 'leave' }, '*'); } catch(e) {}
+  }
+  function postHover(on) {
+    try { window.parent.postMessage({ _dogSim: on ? 'hoverOn' : 'hoverOff' }, '*'); } catch(e) {}
+  }
+  document.addEventListener('mousemove',  e => postMove(e.clientX, e.clientY));
+  document.addEventListener('mouseleave', () => postLeave());
+  document.addEventListener('mouseover', e => {
+    const el = e.target.closest('button,input,select,textarea,.tab,.btn-run,.dropzone');
+    postHover(!!el);
+  });
+})();
+</script>
+</body>
+</html>

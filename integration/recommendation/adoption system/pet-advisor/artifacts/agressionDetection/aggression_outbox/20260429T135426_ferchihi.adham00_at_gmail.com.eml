@@ -1,0 +1,17 @@
+To: ferchihi.adham00@gmail.com
+Subject: [URGENT] Suspected dog-attack on human — incident f7c215ec-b135-4e1d-bf67-f08c7944cf75
+X-Smtp-Status: pending
+
+Our automated monitoring system detected a likely incident requiring your attention.
+
+Severity: CRITICAL
+Incident id: f7c215ec-b135-4e1d-bf67-f08c7944cf75
+Time: 2026-04-29T13:54:19.230151+00:00
+Source: fdcc47b1-8f3a-4f6e-9dba-3726b8f3e9d1.mp4 (frame 275)
+Location: unknown
+
+Detector reason: Motion-based analysis (lite mode — install ultralytics for full YOLO detection). Peak motion=74.1%, EMA=1.000, sustained=21 frames, interaction frames=21.
+Agent rationale: High EMA score and sustained motion with multiple entity interactions indicate a high risk of physical attack.
+
+A full report is attached in the operator's incident dashboard.
+

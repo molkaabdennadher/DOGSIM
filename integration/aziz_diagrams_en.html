@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Pipeline Diagrams — Aziz | DOGSIM-TN</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#1e293b;font-size:11.5px;line-height:1.4}
+
+/* ── Page ── */
+.page{width:860px;margin:0 auto;padding:44px 48px;page-break-after:always}
+.page:last-child{page-break-after:auto}
+
+/* ── Diagram header ── */
+.diag-title{font-size:17px;font-weight:800;text-align:center;color:#0f172a;letter-spacing:.01em;margin-bottom:3px}
+.diag-sub{font-size:10px;text-align:center;color:#64748b;letter-spacing:.1em;text-transform:uppercase;margin-bottom:26px}
+.diag-line{height:2px;background:linear-gradient(90deg,#e2e8f0 0%,#94a3b8 50%,#e2e8f0 100%);margin-bottom:22px}
+
+/* ── Section ── */
+.sec{margin-bottom:4px}
+.sec-hdr{display:flex;align-items:center;gap:7px;margin-bottom:7px}
+.sec-num{width:20px;height:20px;border-radius:50%;background:#1e293b;color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sec-title{font-size:11px;font-weight:800;color:#374151;letter-spacing:.08em;text-transform:uppercase}
+
+/* ── Arrow ── */
+.arr{text-align:center;color:#94a3b8;font-size:16px;margin:3px 0;line-height:1}
+
+/* ── Boxes row ── */
+.row{display:flex;gap:7px;align-items:stretch}
+.box{flex:1;padding:8px 10px;border-radius:7px;border:1.5px solid}
+.box b{display:block;font-size:10.5px;font-weight:700;margin-bottom:3px}
+.box span{font-size:9.5px;color:#475569;line-height:1.6}
+
+/* ── Colors ── */
+.teal{background:#f0fdf9;border-color:#2dd4bf}.teal b{color:#0f766e}
+.blue{background:#eff6ff;border-color:#60a5fa}.blue b{color:#1d4ed8}
+.green{background:#f0fdf4;border-color:#4ade80}.green b{color:#15803d}
+.purple{background:#faf5ff;border-color:#c084fc}.purple b{color:#6d28d9}
+.orange{background:#fffbeb;border-color:#fbbf24}.orange b{color:#b45309}
+.red{background:#fff1f2;border-color:#fb7185}.red b{color:#be123c}
+.slate{background:#f8fafc;border-color:#cbd5e1}.slate b{color:#475569}
+
+/* ── Branches ── */
+.branches{display:flex;gap:10px}
+.branch{flex:1;border:1.5px dashed;border-radius:9px;padding:9px 10px}
+.br-a{border-color:#60a5fa;background:#f0f7ff}
+.br-b{border-color:#4ade80;background:#f0fdf4}
+.br-title{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;padding-bottom:5px;margin-bottom:7px;border-bottom:1px solid}
+.br-a .br-title{color:#1d4ed8;border-color:#bfdbfe}
+.br-b .br-title{color:#15803d;border-color:#bbf7d0}
+.br-box{background:#fff;border-radius:5px;padding:6px 8px;margin-bottom:5px;border:1px solid}
+.br-a .br-box{border-color:#bfdbfe}
+.br-b .br-box{border-color:#bbf7d0}
+.br-box b{display:block;font-size:10px;font-weight:700;margin-bottom:2px}
+.br-a .br-box b{color:#1d4ed8}
+.br-b .br-box b{color:#15803d}
+.br-box span{font-size:9px;color:#64748b;line-height:1.6}
+.br-out{text-align:center;font-size:9px;font-weight:700;padding:3px 6px;border-radius:4px;margin-top:5px;border:1px solid}
+.br-a .br-out{color:#1d4ed8;border-color:#bfdbfe;background:#eff6ff}
+.br-b .br-out{color:#15803d;border-color:#bbf7d0;background:#f0fdf4}
+
+/* ── Legend ── */
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:18px;padding-top:10px;border-top:1px solid #e2e8f0;font-size:9px;color:#64748b}
+.leg{display:flex;align-items:center;gap:5px}
+.leg-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+
+@media print{.page{page-break-after:always}.page:last-child{page-break-after:auto}}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════
+     OBJECTIVE 1 — STRAY DOG COUNTING
+═══════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="diag-title">Objective 1 — Stray Dog Counting &amp; Population Estimation</div>
+  <div class="diag-sub">DOGSIM-TN · Aziz · Supervised Machine Learning</div>
+  <div class="diag-line"></div>
+
+  <!-- 1. Data -->
+  <div class="sec">
+    <div class="sec-hdr"><div class="sec-num">1</div><div class="sec-title">Data Collection</div></div>
+    <div class="row">
+      <div class="box teal"><b>RGPH 2014 — Tunis Census</b><span>Population · nb_households · household_size<br>surface_km² · dist_centre per sector</span></div>
+      <div class="box teal"><b>OpenStreetMap — Overpass API</b><span>Food POIs (restaurants, cafés,<br>food_shops) · GPS coordinates</span></div>
+      <div class="box teal"><b>Synthetic Dataset</b><span>tunisia_sectors_synthetic.csv<br>Tunis sectors + derived features</span></div>
+    </div>
+  </div>
+  <div class="arr">↓</div>
+
+  <!-- 2. Preprocessing -->
+  <div class="sec">
+    <div class="sec-hdr"><div class="sec-num">2</div><div class="sec-title">Preprocessing &amp; Feature Engineering</div></div>
+    <div class="row">
+      <div class="box blue"><b>9 Selected Features</b><span>population · nb_menages · taille_menage<br>surface_km² · densite_pop · nb_food_poi<br>nb_bennes_org · dist_centre · zone_coeff</span></div>
+      <div class="box blue"><b>Normalization</b><span>StandardScaler (fit on train set)<br>LabelEncoder → risk_class (0/1/2)</span></div>
+      <div class="box blue"><b>Split &amp; Validation</b><span>Train/Val/Test : 70 / 15 / 15 %<br>KFold cross-validation (k=5)<br>Seed = 42</span></div>
+    </div>
+  </div>
+  <div class="arr">↓</div>
+
+  <!-- 3. Modelling -->
+  <div class="sec">
+    <div class="sec-hdr"><div class="sec-num">3</div><div class="sec-title">Modelling — Regression &amp; Classification</div></div>
+    <div class="branches">
+      <div class="branch br-a">
+        <div class="br-title">Branch A — Baseline Regression</div>
+        <div class="br-box"><b>Random Forest Regressor</b><span>n_estimators, max_depth<br>min_samples_split<br>Target : nb_chiens</span></div>
+        <div class="br-box"><b>Random Forest Classifier</b><span>Target : risk_class<br>Classes : Low / Medium / High<br>Probability per class</span></div>
+        <div class="br-out">→ Baseline reference</div>
+      </div>
+      <div class="branch br-b">
+        <div class="br-title">Branch B — Main Model</div>
+        <div class="br-box"><b>Gradient Boosting Regressor</b><span>n_estimators, learning_rate<br>max_depth, subsample<br>Target : nb_chiens</span></div>
+        <div class="br-box"><b>Ensemble Voting</b><span>RF + GB combined<br>Consensus prediction<br>Confidence score computed</span></div>
+        <div class="br-out">→ Production model</div>
+      </div>
+    </div>
+  </div>
+  <div class="arr">↓</div>
+
+  <!-- 4. Evaluation -->
+  <div class="sec">
+    <div class="sec-hdr"><div class="sec-num">4</div><div class="sec-title">Evaluation &amp; Comparison</div></div>
+    <div class="row">
+      <div class="box orange"><b>Regression Metrics</b><span>RF : MAE=175 · RMSE=280 · R²=0.93<br>GB : MAE=163 · RMSE=266 · R²=0.94</span></div>
+      <div class="box orange"><b>Classification Metrics</b><span>RF Classifier : Accuracy = 85.8%<br>Classification report (F1/Recall)<br>Confusion matrix</span></div>
+      <div class="box orange"><b>Visualization</b><span>Learning curves · Feature importance<br>ROC / AUC curves<br>RF vs GB comparison</span></div>
+    </div>
+  </div>
+  <div class="arr">↓</div>
+
+  <!-- 5. Output -->
+  <div class="sec">
+    <div class="sec-hdr"><div class="sec-num">5</div><div class="sec-title">Output &amp; Integration</div></div>
+    <div class="row">
+      <div class="box red"><b>Dog Count Estimate</b><span>Predicted count per sector<br>+ confidence interval</span></div>
+      <div class="box red"><b>Risk Class</b><span>Low / Medium / High<br>+ probability score</span></div>
+      <div class="box red"><b>REST API — DOGSIM-TN</b><span>POST /stray/predict → JSON<br>Leaflet map · Density heatmap</span></div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="leg"><div class="leg-dot" style="background:#2dd4bf"></div>Source data</div>
+    <div class="leg"><div class="leg-dot" style="background:#60a5fa"></div>Preprocessing / Branch A</div>
+    <div class="leg"><div class="leg-dot" style="background:#4ade80"></div>Branch B — Production</div>
+    <div class="leg"><div class="leg-dot" style="background:#fbbf24"></div>Evaluation</div>
+    <div class="leg"><div class="leg-dot" style="background:#fb7185"></div>Output / Integration</div>
+    <div class="leg" style="margin-left:auto;font-style:italic">- - Branch A &nbsp;&nbsp; — Branch B</div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     OBJECTIVE 2 — BIN GEOLOCATION RECOMMENDATION
+═══════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="diag-title">Objective 2 — Waste Bin Geolocation Recommendation</div>
+  <div class="diag-sub">DOGSIM-TN · Aziz · Geospatial Optimization + OSM</div>
+  <div class="diag-line"></div>
+
+  <!-- 1. Data -->
+  <div class="sec">
+    <div class="sec-hdr"><div class="sec-num">1</div><div class="sec-title">Data Collection</div></div>
+    <div class="row">
+      <div class="box teal"><b>Dog Density (Obj. 1)</b><span>Estimated nb_chiens per sector<br>risk_class · surface_km²</span></div>
+      <div class="box teal"><b>OSM — Overpass API</b><span>Restaurants · cafés · grocery stores<br>Street intersections (OSM nodes)<br>Existing bin positions</span></div>
+      <div class="box teal"><b>Demographic Data</b><span>Population per sector<br>Nb households · Zone type<br>(residential/commercial/mixed)</span></div>
+    </div>
+  </div>
+  <div class="arr">↓</div>
+
+  <!-- 2. Feature Engineering -->
+  <div class="sec">
+    <div class="sec-hdr"><div class="sec-num">2</div><div class="sec-title">Feature Engineering &amp; Need Estimation</div></div>
+    <div class="row">
+      <div class="box blue"><b>Calibrated Formula (Tunisian context)</b><span>Base : 1 bin / 150 inhabitants<br>+ Restaurants × 0.25 bin<br>+ Cafés × 0.12 bin<br>+ 20 dogs → +1 organic bin</span></div>
+      <div class="box blue"><b>POI Aggregation</b><span>nb_food_poi count within radius<br>Weighted by type (restaurant &gt; café)<br>Waste pressure score per zone</span></div>
+      <div class="box blue"><b>Operational Constraints</b><span>Min distance between bins : 150 m<br>Coverage radius : 350 m<br>Bin capacity : 700 L<br>Limits : 5 ≤ n_bins ≤ 300</span></div>
+    </div>
+  </div>
+  <div class="arr">↓</div>
+
+  <!-- 3. SmartBinPlacer Algorithm -->
+  <div class="sec">
+    <div class="sec-hdr"><div class="sec-num">3</div><div class="sec-title">SmartBinPlacer — Placement Algorithm</div></div>
+    <div class="branches">
+      <div class="branch br-a">
+        <div class="br-title">Candidates — Real Locations</div>
+        <div class="br-box"><b>OSM Street Intersections</b><span>Overpass query → street<br>intersection nodes<br>Filtered by neighborhood</span></div>
+        <div class="br-box"><b>Fallback : Food POI Radius</b><span>If OSM unavailable :<br>Points around restaurants<br>Radius 120 m (configurable)</span></div>
+        <div class="br-out">→ Real candidate locations</div>
+      </div>
+      <div class="branch br-b">
+        <div class="br-title">Selection — Geospatial Optimization</div>
+        <div class="br-box"><b>Coverage Score</b><span>Haversine distance between candidates<br>Overlap penalty &lt; 350 m<br>Bonus for dense zones (dogs + POIs)</span></div>
+        <div class="br-box"><b>Constraint Filtering</b><span>Remove candidates &lt; 150 m apart<br>Select top-N by score<br>Sort by sanitary priority</span></div>
+        <div class="br-out">→ Final optimal selection</div>
+      </div>
+    </div>
+  </div>
+  <div class="arr">↓</div>
+
+  <!-- 4. Evaluation -->
+  <div class="sec">
+    <div class="sec-hdr"><div class="sec-num">4</div><div class="sec-title">Evaluation &amp; Visualization</div></div>
+    <div class="row">
+      <div class="box orange"><b>Coverage Metrics</b><span>% population covered within &lt; 350 m<br>Rate of uncovered zones<br>Dog density reduction score</span></div>
+      <div class="box orange"><b>Comparison Map</b><span>Current vs recommended bins<br>Dog density heatmap overlay<br>Coverage radius visualized</span></div>
+      <div class="box orange"><b>Summary Report</b><span>JSON : la_marsa_summary.json<br>CSV : bennes_optimisees.csv<br>Interactive Leaflet dashboard</span></div>
+    </div>
+  </div>
+  <div class="arr">↓</div>
+
+  <!-- 5. Output -->
+  <div class="sec">
+    <div class="sec-hdr"><div class="sec-num">5</div><div class="sec-title">Output &amp; Integration</div></div>
+    <div class="row">
+      <div class="box red"><b>Recommended GPS Coordinates</b><span>List (lat, lon) per sector<br>Optimized bin count<br>Type (organic / standard)</span></div>
+      <div class="box red"><b>REST API — DOGSIM-TN</b><span>POST /stray/bins → JSON<br>Input : neighborhood + params<br>Output : GeoJSON bins</span></div>
+      <div class="box red"><b>Map Dashboard</b><span>Leaflet · bin markers<br>Filter by neighborhood / type<br>CSV export available</span></div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="leg"><div class="leg-dot" style="background:#2dd4bf"></div>Source data</div>
+    <div class="leg"><div class="leg-dot" style="background:#60a5fa"></div>Feature engineering / Candidates</div>
+    <div class="leg"><div class="leg-dot" style="background:#4ade80"></div>Optimal selection</div>
+    <div class="leg"><div class="leg-dot" style="background:#fbbf24"></div>Evaluation</div>
+    <div class="leg"><div class="leg-dot" style="background:#fb7185"></div>Output / API</div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     OBJECTIVE 3 — FEEDING ZONE DETECTION
+═══════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="diag-title">Objective 3 — Feeding Zone Detection</div>
+  <div class="diag-sub">DOGSIM-TN · Aziz · Unsupervised Geospatial Clustering</div>
+  <div class="diag-line"></div>
+
+  <!-- 1. Data -->
+  <div class="sec">
+    <div class="sec-hdr"><div class="sec-num">1</div><div class="sec-title">Data Collection</div></div>
+    <div class="row">
+      <div class="box teal"><b>Food POIs — OSM</b><span>Restaurants · cafés · supermarkets<br>Markets · bakeries<br>GPS coordinates (lat, lon)</span></div>
+      <div class="box teal"><b>Dog Density (Obj. 1)</b><span>Estimated nb_chiens per sector<br>risk_class · density heatmap</span></div>
+      <div class="box teal"><b>Sector Data</b><span>Neighborhood geographic boundaries<br>Processed data : *_poi.csv<br>26 Tunis sectors</span></div>
+    </div>
+  </div>
+  <div class="arr">↓</div>
+
+  <!-- 2. Preprocessing -->
+  <div class="sec">
+    <div class="sec-hdr"><div class="sec-num">2</div><div class="sec-title">Geospatial Preprocessing</div></div>
+    <div class="row">
+      <div class="box blue"><b>Coordinate Extraction</b><span>JSON / CSV parsing → (lat, lon)<br>Valid POI filtering<br>Tunis geographic projection</span></div>
+      <div class="box blue"><b>POI Weighting</b><span>AHP_WEIGHTS : multi-criteria score<br>POI count within N_feeding_zones radius<br>Dog density score × zone_coeff</span></div>
+      <div class="box blue"><b>Candidate Grid</b><span>GRID_STEP_DEG : grid step size<br>Candidates on sector bbox<br>Filter by MIN_DIST_FZ_DEG</span></div>
+    </div>
+  </div>
+  <div class="arr">↓</div>
+
+  <!-- 3. Clustering -->
+  <div class="sec">
+    <div class="sec-hdr"><div class="sec-num">3</div><div class="sec-title">Clustering &amp; Zone Detection</div></div>
+    <div class="branches">
+      <div class="branch br-a">
+        <div class="br-title">DBSCAN — Spatial Clustering</div>
+        <div class="br-box"><b>Parameters</b><span>eps = DBSCAN_EPS (configurable)<br>min_samples = DBSCAN_MIN_SAMPLES<br>Metric : Haversine (coordinates)</span></div>
+        <div class="br-box"><b>Detected Clusters</b><span>Dense food POI zones<br>Noise points = isolated zones<br>Cluster labels per POI</span></div>
+        <div class="br-out">→ Concentration zones</div>
+      </div>
+      <div class="branch br-b">
+        <div class="br-title">Hotspot Detection</div>
+        <div class="br-box"><b>Quantile Analysis</b><span>POINT_NOIR_QUANTILE : threshold<br>Zones above quantile<br>= priority "hotspots"</span></div>
+        <div class="br-box"><b>AHP Scoring</b><span>Weighted criteria (AHP_WEIGHTS)<br>Final score per candidate zone<br>Top-N zones selected</span></div>
+        <div class="br-out">→ Ranked priority zones</div>
+      </div>
+    </div>
+  </div>
+  <div class="arr">↓</div>
+
+  <!-- 4. Validation -->
+  <div class="sec">
+    <div class="sec-hdr"><div class="sec-num">4</div><div class="sec-title">Validation &amp; Evaluation</div></div>
+    <div class="row">
+      <div class="box purple"><b>Silhouette Score</b><span>DBSCAN cluster quality<br>Intra-cluster cohesion<br>Inter-cluster separation</span></div>
+      <div class="box purple"><b>Geographic Validation</b><span>MIN_DIST_FZ_DEG constraint<br>Overlap with known zones<br>Consistency with dog density</span></div>
+      <div class="box orange"><b>Visualization</b><span>Leaflet map : zone polygons<br>la_marsa_feeding_zones.csv<br>Density + POI overlay</span></div>
+    </div>
+  </div>
+  <div class="arr">↓</div>
+
+  <!-- 5. Output -->
+  <div class="sec">
+    <div class="sec-hdr"><div class="sec-num">5</div><div class="sec-title">Output &amp; Integration</div></div>
+    <div class="row">
+      <div class="box red"><b>Feeding Zones (GPS)</b><span>Zone centroid coordinates<br>Risk score per zone<br>Estimated zone radius</span></div>
+      <div class="box red"><b>REST API — DOGSIM-TN</b><span>POST /stray/feeding-zones → JSON<br>GeoJSON zone polygons<br>Filter by neighborhood / risk</span></div>
+      <div class="box red"><b>Map Dashboard</b><span>Zones colored by score<br>Hotspots highlighted<br>Export : feeding_zones.csv</span></div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="leg"><div class="leg-dot" style="background:#2dd4bf"></div>Source data</div>
+    <div class="leg"><div class="leg-dot" style="background:#60a5fa"></div>Preprocessing / DBSCAN</div>
+    <div class="leg"><div class="leg-dot" style="background:#4ade80"></div>Hotspot Detection</div>
+    <div class="leg"><div class="leg-dot" style="background:#c084fc"></div>Validation</div>
+    <div class="leg"><div class="leg-dot" style="background:#fbbf24"></div>Evaluation</div>
+    <div class="leg"><div class="leg-dot" style="background:#fb7185"></div>Output / API</div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     OBJECTIVE 4 — FEEDING INFRACTION DETECTION
+═══════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="diag-title">Objective 4 — Feeding Infraction Detection (Computer Vision)</div>
+  <div class="diag-sub">DOGSIM-TN · Aziz · YOLOv8 · Multi-object Tracking · Optical Flow</div>
+  <div class="diag-line"></div>
+
+  <!-- 1. Input -->
+  <div class="sec">
+    <div class="sec-hdr"><div class="sec-num">1</div><div class="sec-title">Input — Surveillance Video</div></div>
+    <div class="row">
+      <div class="box teal"><b>Video Stream</b><span>Formats : MP4 · AVI · MOV · MKV<br>Fixed cameras (wide angle)<br>Variable resolution</span></div>
+      <div class="box teal"><b>VideoBuffer — Circular Buffer</b><span>Stores last N frames<br>Timestamp metadata (ms)<br>Random access for backtracking</span></div>
+      <div class="box teal"><b>Frame Extraction</b><span>Frame-by-frame (cv2.VideoCapture)<br>Resize + color normalization<br>Frame index for tracking</span></div>
+    </div>
+  </div>
+  <div class="arr">↓</div>
+
+  <!-- 2. YOLO Detection -->
+  <div class="sec">
+    <div class="sec-hdr"><div class="sec-num">2</div><div class="sec-title">Detection — YOLOv8n</div></div>
+    <div class="row">
+      <div class="box blue"><b>YOLODetector (ultralytics)</b><span>Model : yolov8n.pt (pretrained COCO)<br>Conf. threshold : 0.45 · IoU : 0.45</span></div>
+      <div class="box blue"><b>Detected Classes</b><span>Dog : class_id = 16<br>Person : class_id = 0<br>Bowl/plate : class_id = 45</span></div>
+      <div class="box blue"><b>Outputs</b><span>BBox (x1,y1,x2,y2) + centroid<br>Confidence · label · area<br>Detection list per frame</span></div>
+    </div>
+  </div>
+  <div class="arr">↓</div>
+
+  <!-- 3. Tracking + Analysis -->
+  <div class="sec">
+    <div class="sec-hdr"><div class="sec-num">3</div><div class="sec-title">Multi-object Tracking &amp; Behavioral Analysis</div></div>
+    <div class="branches">
+      <div class="branch br-a">
+        <div class="br-title">IoU Tracker — Multi-object Tracking</div>
+        <div class="br-box"><b>IoU Tracker (without DeepSORT)</b><span>Detection/track matching via IoU<br>Position history per track_id<br>age · lost_frames · is_active</span></div>
+        <div class="br-box"><b>StationarityDetector</b><span>Stagnation radius : 60 px<br>Min duration : 8 seconds<br>→ StationarityEvent if confirmed</span></div>
+        <div class="br-out">→ Stationary dog identified</div>
+      </div>
+      <div class="branch br-b">
+        <div class="br-title">EatingDetector — 2 Signals</div>
+        <div class="br-box"><b>Signal 1 — Bowl Detection</b><span>YOLO class 45 (bowl/plate)<br>Bowl ↔ dog distance &lt; 120 px<br>→ Strong confirmation</span></div>
+        <div class="br-box"><b>Signal 2 — Optical Flow</b><span>Lucas-Kanade on head region (bbox/2)<br>Flow magnitude &gt; 1.2 → chewing/licking<br>Window : 10 frames</span></div>
+        <div class="br-out">→ Signal 1 OR Signal 2 → Eating</div>
+      </div>
+    </div>
+  </div>
+  <div class="arr">↓</div>
+
+  <!-- 4. Backtracking -->
+  <div class="sec">
+    <div class="sec-hdr"><div class="sec-num">4</div><div class="sec-title">Backtracker — Buffer Rewind</div></div>
+    <div class="row">
+      <div class="box purple"><b>Human Visit Search</b><span>Rewinds through VideoBuffer<br>Finds last human presence<br>near the anchor zone (stagnation)</span></div>
+      <div class="box purple"><b>Deposit Identification</b><span>Deposit frame = min(human, anchor) dist<br>Approach frame = human standing<br>Departure frame = human moving away</span></div>
+      <div class="box purple"><b>3 Key Frames Extracted</b><span>1_approach.jpg · 2_deposit.jpg<br>3_departure.jpg<br>Saved with infraction ID</span></div>
+    </div>
+  </div>
+  <div class="arr">↓</div>
+
+  <!-- 5. Evaluation -->
+  <div class="sec">
+    <div class="sec-hdr"><div class="sec-num">5</div><div class="sec-title">Evaluation &amp; Output</div></div>
+    <div class="row">
+      <div class="box orange"><b>Detection Metrics</b><span>Precision · Recall · mAP@0.45<br>F1-score per class (dog/person/bowl)<br>Stationarity false positives</span></div>
+      <div class="box red"><b>Infraction Report (JSON)</b><span>INF_YYYYMMDD_HHMMSS_ID.json<br>timestamp · track_id · frames_path<br>eating_reason · confidence</span></div>
+      <div class="box red"><b>REST API — DOGSIM-TN</b><span>POST /cv/analyze-video → JSON<br>Detected infractions + evidence<br>Municipal agent alert</span></div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="leg"><div class="leg-dot" style="background:#2dd4bf"></div>Video input</div>
+    <div class="leg"><div class="leg-dot" style="background:#60a5fa"></div>YOLO Detection / Tracker</div>
+    <div class="leg"><div class="leg-dot" style="background:#4ade80"></div>EatingDetector</div>
+    <div class="leg"><div class="leg-dot" style="background:#c084fc"></div>Backtracking</div>
+    <div class="leg"><div class="leg-dot" style="background:#fbbf24"></div>Evaluation</div>
+    <div class="leg"><div class="leg-dot" style="background:#fb7185"></div>Output / Alert</div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Analyse Selles Chien</title>
+  <style>
+    body { font-family: Arial; max-width: 700px; margin: 40px auto; padding: 20px; }
+    h1 { color: #2c3e50; }
+    #zone { border: 2px dashed #aaa; padding: 40px; text-align: center; cursor: pointer; border-radius: 10px; }
+    #zone:hover { border-color: #3498db; }
+    #preview { max-width: 300px; margin: 20px auto; display: none; }
+    button { background: #3498db; color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-size: 16px; }
+    button:hover { background: #2980b9; }
+    #resultat { margin-top: 20px; padding: 20px; background: #f8f9fa; border-radius: 10px; display: none; }
+    .urgence-HAUTE   { color: #e74c3c; font-weight: bold; }
+    .urgence-MOYENNE { color: #f39c12; font-weight: bold; }
+    .urgence-FAIBLE  { color: #3498db; font-weight: bold; }
+    .urgence-AUCUNE  { color: #2ecc71; font-weight: bold; }
+    #loading { display: none; color: #888; font-style: italic; }
+  </style>
+</head>
+<body>
+  <h1>🐕 Analyse des selles de chien</h1>
+
+  <div id="zone" onclick="document.getElementById('input').click()">
+    📷 Cliquez ou glissez une image ici
+    <input type="file" id="input" accept="image/*" style="display:none" onchange="chargerImage(event)">
+  </div>
+
+  <img id="preview">
+  <br>
+  <button onclick="analyser()" id="btn" style="display:none">🔍 Analyser</button>
+  <p id="loading">⏳ Analyse en cours...</p>
+
+  <div id="resultat">
+    <h2>Résultats</h2>
+    <p><strong>Classe détectée :</strong> <span id="classe"></span></p>
+    <p><strong>Urgence :</strong> <span id="urgence"></span></p>
+    <h3>Traitement recommandé</h3>
+    <ul id="traitement"></ul>
+    <h3>Recommandation IA</h3>
+    <p id="recommandation"></p>
+  </div>
+
+  <script>
+    let fichier = null;
+
+    function chargerImage(e) {
+      fichier = e.target.files[0];
+      const preview = document.getElementById('preview');
+      preview.src = URL.createObjectURL(fichier);
+      preview.style.display = 'block';
+      document.getElementById('btn').style.display = 'inline-block';
+    }
+
+    async function analyser() {
+      if (!fichier) return;
+      document.getElementById('loading').style.display = 'block';
+      document.getElementById('resultat').style.display = 'none';
+      document.getElementById('btn').disabled = true;
+
+      const form = new FormData();
+      form.append('file', fichier);
+
+      const res = await fetch('/predict', { method: 'POST', body: form });
+      const data = await res.json();
+
+      document.getElementById('classe').textContent = data.classes_detectees.join(', ');
+      const urgenceEl = document.getElementById('urgence');
+      urgenceEl.textContent = data.urgence;
+      urgenceEl.className = 'urgence-' + data.urgence;
+
+      const ul = document.getElementById('traitement');
+      ul.innerHTML = data.traitement.map(t => `<li>${t}</li>`).join('');
+      document.getElementById('recommandation').textContent = data.recommandation_llm;
+
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('resultat').style.display = 'block';
+      document.getElementById('btn').disabled = false;
+    }
+  </script>
+</body>
+</html>

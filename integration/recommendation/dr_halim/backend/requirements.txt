@@ -1,0 +1,36 @@
+# Dr Halim - Unified AI Vet Backend
+# Compatible with Python 3.10, 3.11, 3.12
+# DO NOT install manually - use setup_and_run.ps1
+
+# --- API ---
+fastapi==0.115.0
+uvicorn==0.30.6
+python-multipart==0.0.9
+requests==2.31.0
+
+# --- Numerics (must be installed before TF/Torch) ---
+numpy==1.26.4
+
+# --- TensorFlow CPU (breed model) ---
+# tensorflow-cpu avoids heavy CUDA downloads, works on all Windows machines
+tensorflow-cpu==2.16.2
+
+# --- PyTorch CPU (skin + behaviour models) ---
+# Installed separately in setup script with the official PyTorch index
+torch==2.3.1
+torchvision==0.18.1
+
+# --- Computer vision ---
+ultralytics==8.2.0
+opencv-python==4.9.0.80
+Pillow==10.3.0
+
+# --- Audio ---
+librosa==0.10.1
+soundfile==0.12.1
+audioread==3.0.1
+
+# --- Misc ---
+scipy==1.13.1
+matplotlib==3.9.0
+tqdm==4.66.4

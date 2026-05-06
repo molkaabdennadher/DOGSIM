@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulation RL — DOGSIM-TN</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.27.0/plotly.min.js"></script>
+<style>
+:root{
+  --y:#FFB800;--b:#060606;--w:#FFFFFF;
+  --dg:#111111;--mg:#1E1E1E;--tg:#666666;
+  --border:#1A1A1A;
+  --fh:'Syne',sans-serif;--fb:'Inter',sans-serif;--fm:'Space Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow-x:hidden;background:var(--b);color:var(--w);font-family:var(--fb);-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:var(--b)}
+::-webkit-scrollbar-thumb{background:var(--y)}
+
+/* ── API bar ── */
+.api-bar{
+  background:var(--dg);border-bottom:1px solid var(--border);
+  padding:0 16px;height:37px;display:flex;align-items:center;gap:8px;
+  font-family:var(--fm);font-size:10px;color:var(--tg);letter-spacing:.08em;flex-shrink:0;
+}
+.badge{background:var(--y);color:var(--b);font-family:var(--fm);font-size:9px;font-weight:700;
+  padding:2px 6px;border-radius:2px;letter-spacing:.1em}
+.dot{width:7px;height:7px;border-radius:50%}
+.dot-ok{background:#22C55E}.dot-err{background:#EF4444}.dot-idle{background:var(--tg)}.dot-warn{background:#F59E0B}
+
+/* ── Layout ── */
+.layout{display:grid;grid-template-columns:320px 1fr;align-items:start;min-height:calc(100vh - 37px)}
+
+/* ── Sidebar ── */
+.sidebar{
+  background:var(--dg);border-right:1px solid var(--border);
+  padding:16px 14px;
+  position:sticky;top:37px;
+  height:calc(100vh - 37px);
+  overflow-y:auto;
+}
+.sec{font-family:var(--fm);font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.2em;
+  color:rgba(255,184,0,.5);margin:20px 0 8px;display:flex;align-items:center;gap:8px}
+.sec::before{content:'';width:16px;height:1px;background:var(--y);opacity:.4}
+.sec:first-child{margin-top:0}
+
+.field{margin-bottom:10px}
+.field label{display:block;font-family:var(--fm);font-size:9px;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--tg);margin-bottom:4px}
+.field select,.field input{
+  width:100%;background:var(--mg);border:1px solid var(--border);
+  color:var(--w);border-radius:2px;padding:8px 10px;font-size:.82rem;font-family:var(--fb);
+  outline:none;transition:border .15s;
+}
+.field select:focus,.field input:focus{border-color:var(--y)}
+.field select option{background:var(--mg)}
+.hint{font-family:var(--fm);font-size:9px;color:var(--tg);margin-top:4px;letter-spacing:.04em}
+
+/* ── Budget seuils ── */
+.budget-bar{
+  background:var(--mg);border:1px solid var(--border);border-radius:2px;
+  padding:8px 10px;margin-top:6px;
+  font-family:var(--fm);font-size:8px;color:var(--tg);line-height:1.8;
+}
+.budget-bar span{color:var(--w)}
+
+/* ── Buttons ── */
+.btn-run{
+  width:100%;padding:10px;background:var(--y);border:none;
+  color:var(--b);border-radius:2px;font-family:var(--fm);font-size:10px;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:opacity .15s;
+}
+.btn-run:hover{opacity:.88}
+.btn-run:disabled{opacity:.4;cursor:not-allowed}
+.btn-sec{
+  width:100%;padding:8px;margin-top:6px;
+  background:transparent;border:1px solid var(--border);
+  color:var(--tg);border-radius:2px;font-family:var(--fm);font-size:9px;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .15s;
+}
+.btn-sec:hover{border-color:var(--y);color:var(--y)}
+
+/* ── Scénarios ── */
+.scenario-btns{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
+.scn-btn{
+  padding:7px 8px;background:var(--mg);border:1px solid var(--border);
+  color:var(--tg);border-radius:2px;font-family:var(--fm);font-size:8px;font-weight:700;
+  letter-spacing:.08em;cursor:pointer;transition:all .15s;text-align:center;
+}
+.scn-btn:hover{border-color:var(--y);color:var(--y)}
+.scn-btn.active{border-color:var(--y);color:var(--b);background:var(--y)}
+
+/* ── Stats ── */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px}
+.stat-card{background:var(--mg);border:1px solid var(--border);border-radius:2px;padding:8px 10px}
+.stat-val{font-family:var(--fm);font-size:.95rem;font-weight:700;color:var(--y)}
+.stat-val.red{color:#EF4444}.stat-val.green{color:#22C55E}
+.stat-lbl{font-family:var(--fm);font-size:8px;color:var(--tg);letter-spacing:.08em;text-transform:uppercase;margin-top:2px}
+
+/* ── Chart tabs ── */
+.chart-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);padding:0 20px}
+.chart-tab{padding:10px 14px;font-family:var(--fm);font-size:9px;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;cursor:pointer;color:var(--tg);
+  border-bottom:2px solid transparent;transition:all .15s;
+  background:none;border-top:none;border-left:none;border-right:none;}
+.chart-tab.active{color:var(--y);border-bottom-color:var(--y)}
+.chart-tab:hover:not(.active){color:var(--w)}
+
+/* ── Content ── */
+.content{padding:20px;display:flex;flex-direction:column;gap:16px;min-height:calc(100vh - 37px)}
+
+/* ── Map ── */
+#leafletMap{height:400px;border-radius:2px;background:var(--mg)}
+
+/* ── Policy table ── */
+.policy-table{width:100%;border-collapse:collapse;font-size:.75rem}
+.policy-table th{font-family:var(--fm);font-size:8px;text-transform:uppercase;letter-spacing:.1em;
+  color:var(--tg);padding:6px 8px;text-align:left;border-bottom:1px solid var(--border)}
+.policy-table td{padding:5px 8px;border-bottom:1px solid rgba(26,26,26,.5);font-family:var(--fm);font-size:.7rem}
+.policy-table tr:last-child td{border-bottom:none}
+.policy-table tr:hover td{background:rgba(255,184,0,.04)}
+.action-chip{display:inline-block;padding:2px 6px;border-radius:2px;font-size:8px;font-weight:700}
+.a0{background:rgba(102,102,102,.2);color:#666}
+.a1{background:rgba(29,158,117,.15);color:#1D9E75}
+.a2{background:rgba(55,138,221,.15);color:#378ADD}
+.a3{background:rgba(255,184,0,.15);color:#FFB800}
+
+/* ── Loading / error ── */
+.spinner{display:flex;align-items:center;justify-content:center;gap:8px;
+  padding:60px 0;font-family:var(--fm);font-size:.8rem;color:var(--tg)}
+.spin-dot{width:8px;height:8px;border-radius:50%;background:var(--y);
+  animation:pulse 1.2s ease-in-out infinite}
+.spin-dot:nth-child(2){animation-delay:.4s}
+.spin-dot:nth-child(3){animation-delay:.8s}
+@keyframes pulse{0%,100%{opacity:.2;transform:scale(.8)}50%{opacity:1;transform:scale(1.1)}}
+.err-box{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:2px;
+  padding:12px 14px;font-family:var(--fm);font-size:.75rem;color:#EF4444;letter-spacing:.04em}
+</style>
+</head>
+<body>
+
+<!-- ── API bar ── -->
+<div class="api-bar" id="apiBar">
+  <span class="badge">RL</span>
+  <div class="dot dot-idle" id="statusDot"></div>
+  <span id="statusTxt">Connexion…</span>
+  <span style="margin-left:auto;font-size:9px;opacity:.5">DOGSIM-TN · Digital Twin Q-Learning</span>
+</div>
+
+<!-- ── Layout ── -->
+<div class="layout">
+
+  <!-- ── Sidebar ── -->
+  <div class="sidebar">
+
+    <div class="sec">Paramètres</div>
+    <div class="field">
+      <label>Quartier</label>
+      <select id="selQuartier">
+        <option value="Bab Souika">Bab Souika</option>
+        <option value="La Medina">La Medina</option>
+        <option value="Le Bardo">Le Bardo</option>
+        <option value="Ariana">Ariana</option>
+        <option value="Ben Arous">Ben Arous</option>
+        <option value="La Marsa">La Marsa</option>
+      </select>
+    </div>
+
+    <div class="sec">Scénario</div>
+    <div class="scenario-btns">
+      <button class="scn-btn" id="scn-rien"  onclick="setScenario('rien')">🚫 Rien faire</button>
+      <button class="scn-btn" id="scn-vacc"  onclick="setScenario('vacc')">💉 Vaccination</button>
+      <button class="scn-btn" id="scn-cnvr"  onclick="setScenario('cnvr')">✂ CNVR</button>
+      <button class="scn-btn active" id="scn-rl" onclick="setScenario('rl')">🤖 RL Optimal</button>
+    </div>
+
+    <div class="sec" id="budgetSec">Budget municipal</div>
+    <div class="field" id="budgetField">
+      <label>Budget disponible (DT)</label>
+      <input type="number" id="inputBudget" min="240" step="100" placeholder="Ex: 6240">
+      <div class="hint">Laisser vide = sans contrainte</div>
+    </div>
+    <div class="budget-bar" id="budgetBar">
+      Min absolu : <span>240 DT</span><br>
+      Conseillé : <span>6 240 DT</span> (26 sem. vacc.)<br>
+      Optimal : <span>26 000 DT</span> (CNVR + Combo)
+    </div>
+
+    <div style="margin-top:12px">
+      <button class="btn-run" id="btnSimulate" onclick="runSimulate()">
+        🚀 Simuler 26 semaines
+      </button>
+      <button class="btn-sec" id="btnAllScenarios" onclick="runAllScenarios()">
+        🗺 Comparer tous les scénarios
+      </button>
+    </div>
+
+    <div class="sec" id="statsSection" style="display:none">Résultats</div>
+    <div id="statsCards"></div>
+
+    <div class="sec">Actions Q-Learning</div>
+    <div style="display:flex;flex-direction:column;gap:4px;margin-top:2px">
+      <span class="action-chip a0">A0 — Rien faire (0 DT/sem)</span>
+      <span class="action-chip a1">A1 — Vaccination (240 DT/sem)</span>
+      <span class="action-chip a2">A2 — CNVR (1 000 DT/sem)</span>
+      <span class="action-chip a3">A3 — Combo Vacc+CNVR (1 100 DT/sem)</span>
+    </div>
+
+    <div class="sec">Hyperparamètres</div>
+    <div style="font-family:var(--fm);font-size:9px;color:var(--tg);line-height:1.7">
+      LR = 0.15 · DISCOUNT = 0.92<br>
+      ε-decay : 1.0 → 0.05 sur 5 000 ep.<br>
+      Horizon : 26 sem. · États : 5×5×5
+    </div>
+  </div>
+
+  <!-- ── Content ── -->
+  <div class="content">
+
+    <!-- Tabs -->
+    <div style="background:var(--dg);border:1px solid var(--border);border-radius:2px">
+      <div class="chart-tabs">
+        <button class="chart-tab active" onclick="switchTab('curves')">Courbes densité/risque</button>
+        <button class="chart-tab" onclick="switchTab('policy')">Politique RL</button>
+        <button class="chart-tab" onclick="switchTab('map')">Carte comparative</button>
+      </div>
+
+      <!-- Curves -->
+      <div id="tabCurves" style="padding:16px">
+        <div class="spinner" id="spCurves">
+          <div class="spin-dot"></div><div class="spin-dot"></div><div class="spin-dot"></div>
+          <span>Sélectionner un quartier et simuler</span>
+        </div>
+        <div id="chartCurves" style="display:none"></div>
+      </div>
+
+      <!-- Policy -->
+      <div id="tabPolicy" style="padding:16px;display:none">
+        <div class="spinner" id="spPolicy">
+          <div class="spin-dot"></div><div class="spin-dot"></div><div class="spin-dot"></div>
+          <span>Lancer la simulation pour voir la politique</span>
+        </div>
+        <div id="policyTable" style="display:none;overflow-x:auto;max-height:500px;overflow-y:auto"></div>
+      </div>
+
+      <!-- Map -->
+      <div id="tabMap" style="padding:16px;display:none">
+        <div class="spinner" id="spMap">
+          <div class="spin-dot"></div><div class="spin-dot"></div><div class="spin-dot"></div>
+          <span>Cliquer sur "Comparer tous les scénarios"</span>
+        </div>
+        <div id="mapContainer" style="display:none">
+          <div id="leafletMap"></div>
+          <div id="mapLegend" style="margin-top:12px;display:flex;gap:16px;flex-wrap:wrap"></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /layout -->
+
+<script>
+// ── Config ────────────────────────────────────────────────────
+const API = 'http://localhost:8080';
+let currentTab      = 'curves';
+let currentScenario = 'rl';
+let leafletMap      = null;
+let mapCircles      = [];
+
+const COLORS = {
+  'Bab Souika':'#E24B4A','La Medina':'#EF9F27','Le Bardo':'#7F77DD',
+  'Ariana':'#1D9E75','Ben Arous':'#D4537E','La Marsa':'#378ADD',
+};
+const SCENARIO_COLORS = {
+  rien:'#EF4444', vacc:'#22C55E', cnvr:'#378ADD', rl:'#FFB800'
+};
+const SCENARIO_LABELS = {
+  rien:'Rien faire', vacc:'Vaccination', cnvr:'CNVR', rl:'RL Optimal'
+};
+const ACTION_CLASSES = ['a0','a1','a2','a3'];
+const ACTION_LABELS  = ['Rien faire','Vaccination','CNVR','Combo'];
+
+const LAYOUT_BASE = {
+  paper_bgcolor:'#111111', plot_bgcolor:'#111111',
+  font: { family:'Inter,sans-serif', color:'#FFFFFF', size:11 },
+  xaxis: { gridcolor:'#1A1A1A', zerolinecolor:'#1A1A1A', tickfont:{size:10,color:'#666'} },
+  yaxis: { gridcolor:'#1A1A1A', zerolinecolor:'#1A1A1A', tickfont:{size:10,color:'#666'} },
+  legend: { bgcolor:'transparent', font:{size:10} },
+  margin: { l:50, r:20, t:40, b:50 },
+};
+
+// ── Helper : vérifie que la réponse API est prête ────────────
+function _assertReady(d, status) {
+  if (d && d.error)   throw new Error(d.error);
+  if (status === 202 || (d && d.status === 'loading'))
+    throw new Error('Modèles en cours de chargement — réessayez dans quelques secondes');
+  if (status === 503 || (d && d.status === 'not_started'))
+    throw new Error('Module Molka non initialisé — vérifiez server.py');
+}
+
+// ── Status bar ────────────────────────────────────────────────
+async function checkStatus() {
+  try {
+    const r = await fetch(`${API}/molka/health`, { signal: AbortSignal.timeout(4000) });
+    const d = await r.json();
+    const dot = document.getElementById('statusDot');
+    const txt = document.getElementById('statusTxt');
+    if (d.ready) {
+      dot.className = 'dot dot-ok';
+      txt.textContent = `Module Molka prêt · 5 000 épisodes entraînés`;
+    } else if (d.loading) {
+      dot.className = 'dot dot-warn';
+      txt.textContent = 'Entraînement Q-Learning en cours…';
+      setTimeout(checkStatus, 4000);
+    } else {
+      dot.className = 'dot dot-err';
+      txt.textContent = d.error || 'Module non prêt';
+    }
+  } catch(e) {
+    document.getElementById('statusDot').className = 'dot dot-err';
+    document.getElementById('statusTxt').textContent = 'Serveur inaccessible (port 8080)';
+  }
+}
+
+// ── Tab switching ─────────────────────────────────────────────
+function switchTab(name) {
+  currentTab = name;
+  ['curves','policy','map'].forEach(t => {
+    const el = document.getElementById(`tab${t.charAt(0).toUpperCase()+t.slice(1)}`);
+    if (el) el.style.display = t === name ? '' : 'none';
+  });
+  document.querySelectorAll('.chart-tab').forEach((el, i) => {
+    el.classList.toggle('active', ['curves','policy','map'][i] === name);
+  });
+  if (name === 'map' && leafletMap) setTimeout(() => leafletMap.invalidateSize(), 100);
+}
+
+// ── Scenario ─────────────────────────────────────────────────
+function setScenario(s) {
+  currentScenario = s;
+  ['rien','vacc','cnvr','rl'].forEach(k => {
+    document.getElementById(`scn-${k}`).classList.toggle('active', k === s);
+  });
+  const budgetField = document.getElementById('budgetField');
+  const budgetSec   = document.getElementById('budgetSec');
+  const budgetBar   = document.getElementById('budgetBar');
+  const show = s === 'rl';
+  budgetField.style.display = show ? '' : 'none';
+  budgetSec.style.display   = show ? '' : 'none';
+  budgetBar.style.display   = show ? '' : 'none';
+}
+setScenario('rl');  // init
+
+// ── Simulate ─────────────────────────────────────────────────
+async function runSimulate() {
+  const btn = document.getElementById('btnSimulate');
+  btn.disabled = true;
+  btn.textContent = 'Simulation…';
+
+  const quartier = document.getElementById('selQuartier').value;
+  const budget   = document.getElementById('inputBudget').value;
+  switchTab('curves');
+
+  const spC = document.getElementById('spCurves');
+  const divC = document.getElementById('chartCurves');
+  spC.style.display = 'flex';
+  spC.querySelector('span').textContent = 'Digital Twin en cours…';
+  divC.style.display = 'none';
+
+  try {
+    let data;
+    if (currentScenario === 'rl' && budget) {
+      // Budget-constrained simulation
+      const r = await fetch(`${API}/molka/budget`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ quartier, budget: parseFloat(budget) }),
+      });
+      const d = await r.json();
+      _assertReady(d, r.status);
+      if (!d.densites) throw new Error('Données de simulation manquantes');
+      renderCurvesFromBudget(quartier, d);
+      renderPolicy(quartier, d);
+      renderStatsBudget(d);
+    } else {
+      const r = await fetch(`${API}/molka/simulate`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ quartier, mode: currentScenario }),
+      });
+      const d = await r.json();
+      _assertReady(d, r.status);
+      if (!d.densites) throw new Error('Données de simulation manquantes');
+      renderCurves(quartier, d);
+      renderPolicyFromSimulate(quartier, d);
+      renderStats(quartier, d);
+    }
+  } catch(e) {
+    spC.innerHTML = `<div class="err-box">❌ ${e.message}</div>`;
+    spC.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🚀 Simuler 26 semaines';
+  }
+}
+
+function renderCurves(quartier, d) {
+  const sp  = document.getElementById('spCurves');
+  const div = document.getElementById('chartCurves');
+  const col = SCENARIO_COLORS[d.mode] || '#FFB800';
+  const densites = d.densites || [];
+  const risques  = d.risques  || [];
+  const sem = Array.from({length: densites.length}, (_, i) => i);
+
+  const traces = [
+    {
+      x: sem, y: densites, name: 'Densité (ch/km²)',
+      type:'scatter', mode:'lines+markers',
+      line:{color:col, width:2}, marker:{size:4},
+      yaxis: 'y1',
+    },
+    {
+      x: sem, y: risques, name: 'Risque sanitaire',
+      type:'scatter', mode:'lines',
+      line:{color:'#EF4444', width:1.5, dash:'dot'},
+      yaxis: 'y2',
+    },
+  ];
+
+  const layout = {
+    ...LAYOUT_BASE,
+    title: { text: `${SCENARIO_LABELS[d.mode]} — ${quartier}`, font:{size:13,color:'#fff'}, x:0.01 },
+    xaxis: { ...LAYOUT_BASE.xaxis, title:'Semaine' },
+    yaxis:  { ...LAYOUT_BASE.yaxis, title:'Densité (ch/km²)' },
+    yaxis2: { ...LAYOUT_BASE.yaxis, title:'Risque', overlaying:'y', side:'right',
+              tickfont:{size:10,color:'#EF4444'}, titlefont:{color:'#EF4444'} },
+    height: 340,
+  };
+
+  Plotly.newPlot(div, traces, layout, {responsive:true, displayModeBar:false});
+  sp.style.display  = 'none';
+  div.style.display = 'block';
+}
+
+function renderCurvesFromBudget(quartier, d) {
+  const sp  = document.getElementById('spCurves');
+  const div = document.getElementById('chartCurves');
+  const col = '#FFB800';
+  const densites    = d.densites    || [];
+  const risques     = d.risques     || [];
+  const actions_idx = d.actions_idx || [];
+  const couts_sem   = d.couts_sem   || [];
+  const sem = Array.from({length: densites.length}, (_, i) => i);
+
+  const actionColors = actions_idx.map(a => [
+    '#555','#1D9E75','#378ADD','#FFB800'
+  ][a] || '#555');
+
+  const traces = [
+    {
+      x: sem, y: densites, name: 'Densité',
+      type:'scatter', mode:'lines',
+      line:{color:col, width:2},
+    },
+    {
+      x: sem, y: risques, name: 'Risque',
+      type:'scatter', mode:'lines',
+      line:{color:'#EF4444', width:1.5, dash:'dot'},
+      yaxis: 'y2',
+    },
+    {
+      x: Array.from({length: actions_idx.length}, (_, i) => i+1),
+      y: couts_sem,
+      name: 'Coût hebdo (DT)',
+      type: 'bar',
+      marker: {color: actionColors, opacity: 0.7},
+      yaxis: 'y3',
+    },
+  ];
+
+  const budgetRestant = d.budget_restant != null ? d.budget_restant : '—';
+  const budgetTotal   = d.budget_total   != null ? d.budget_total   : '—';
+  const layout = {
+    ...LAYOUT_BASE,
+    title: { text: `RL Budget ${typeof budgetTotal==='number' ? budgetTotal.toLocaleString() : budgetTotal} DT — ${quartier}`, font:{size:13,color:'#fff'}, x:0.01 },
+    xaxis: { ...LAYOUT_BASE.xaxis, title:'Semaine' },
+    yaxis:  { ...LAYOUT_BASE.yaxis, title:'Densité (ch/km²)', domain:[0.4,1] },
+    yaxis2: { ...LAYOUT_BASE.yaxis, title:'Risque', overlaying:'y', side:'right',
+              tickfont:{size:10,color:'#EF4444'} },
+    yaxis3: { ...LAYOUT_BASE.yaxis, title:'Coût (DT)', domain:[0,0.34] },
+    height: 460,
+    annotations: [{
+      x: 0.98, y: 0.98, xref:'paper', yref:'paper',
+      text: `Budget restant : ${typeof budgetRestant==='number' ? budgetRestant.toLocaleString() : budgetRestant} DT`,
+      showarrow: false, font:{family:'Space Mono',size:9,color:'#22C55E'},
+      xanchor:'right', yanchor:'top',
+      bgcolor:'rgba(34,197,94,.1)', bordercolor:'rgba(34,197,94,.3)', borderpad:4,
+    }],
+  };
+
+  Plotly.newPlot(div, traces, layout, {responsive:true, displayModeBar:false});
+  sp.style.display  = 'none';
+  div.style.display = 'block';
+}
+
+function renderPolicy(quartier, d) {
+  const sp  = document.getElementById('spPolicy');
+  const div = document.getElementById('policyTable');
+  const actions    = d.actions     || [];
+  const actions_idx= d.actions_idx || [];
+  const couts_sem  = d.couts_sem   || [];
+  const densites   = d.densites    || [];
+  const risques    = d.risques     || [];
+  const rows = actions.map((a, i) => {
+    const cls  = ACTION_CLASSES[actions_idx[i]] || 'a0';
+    const cout = couts_sem[i] || 0;
+    const den  = densites[i+1] != null ? densites[i+1].toFixed(1) : '—';
+    const ris  = risques[i+1]  != null ? risques[i+1]  : 0;
+    const risCol = ris > 0.35 ? '#EF4444' : ris > 0.22 ? '#F59E0B' : '#22C55E';
+    return `<tr>
+      <td style="color:var(--tg)">${i+1}</td>
+      <td><span class="action-chip ${cls}">${a}</span></td>
+      <td style="color:var(--w)">${den}</td>
+      <td style="color:${risCol}">${ris.toFixed(3)}</td>
+      <td style="color:var(--y)">${cout} DT</td>
+    </tr>`;
+  }).join('');
+
+  div.innerHTML = `
+    <table class="policy-table">
+      <thead><tr>
+        <th>Sem</th><th>Action</th><th>Densité</th><th>Risque</th><th>Coût</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+
+  sp.style.display  = 'none';
+  div.style.display = 'block';
+}
+
+function renderPolicyFromSimulate(quartier, d) {
+  const sp  = document.getElementById('spPolicy');
+  const div = document.getElementById('policyTable');
+  const actions    = d.actions     || [];
+  const actions_idx= d.actions_idx || [];
+  const couts      = d.couts       || [];
+  const densites   = d.densites    || [];
+  const risques    = d.risques     || [];
+  const rows = actions.map((a, i) => {
+    const cls  = ACTION_CLASSES[actions_idx[i]] || 'a0';
+    const cout = couts[i] || 0;
+    const den  = densites[i+1] != null ? densites[i+1].toFixed(1) : '—';
+    const ris  = risques[i+1]  != null ? risques[i+1]  : 0;
+    const risCol = ris > 0.35 ? '#EF4444' : ris > 0.22 ? '#F59E0B' : '#22C55E';
+    return `<tr>
+      <td style="color:var(--tg)">${i+1}</td>
+      <td><span class="action-chip ${cls}">${a}</span></td>
+      <td style="color:var(--w)">${den}</td>
+      <td style="color:${risCol}">${ris.toFixed(3)}</td>
+      <td style="color:var(--y)">${cout} DT</td>
+    </tr>`;
+  }).join('');
+
+  div.innerHTML = `
+    <table class="policy-table">
+      <thead><tr>
+        <th>Sem</th><th>Action</th><th>Densité</th><th>Risque</th><th>Coût</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+
+  sp.style.display  = 'none';
+  div.style.display = 'block';
+}
+
+function renderStats(quartier, d) {
+  const sec   = document.getElementById('statsSection');
+  const cards = document.getElementById('statsCards');
+  sec.style.display = '';
+
+  const densites = d.densites || [0];
+  const risques  = d.risques  || [0];
+  const d0 = densites[0],                  dF = densites[densites.length - 1];
+  const r0 = risques[0],                   rF = risques[risques.length - 1];
+  const dDelta = dF - d0, rDelta = rF - r0;
+
+  cards.innerHTML = `
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-val ${dDelta > 0 ? 'red' : 'green'}">${dDelta > 0 ? '+' : ''}${dDelta.toFixed(1)}</div>
+        <div class="stat-lbl">Δ Densité</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val ${rDelta > 0 ? 'red' : 'green'}">${rDelta > 0 ? '+' : ''}${(rDelta*100).toFixed(1)}%</div>
+        <div class="stat-lbl">Δ Risque</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val">${d.cout_total.toLocaleString()}</div>
+        <div class="stat-lbl">Coût total (DT)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val">${dF.toFixed(1)}</div>
+        <div class="stat-lbl">Densité finale</div>
+      </div>
+    </div>`;
+}
+
+function renderStatsBudget(d) {
+  const sec   = document.getElementById('statsSection');
+  const cards = document.getElementById('statsCards');
+  sec.style.display = '';
+
+  const ds = d.densites || [0];
+  const rs = d.risques  || [0];
+  const d0 = ds[0] || 0,  dF = ds[ds.length-1] || 0;
+  const r0 = rs[0] || 0,  rF = rs[rs.length-1] || 0;
+  const coutTotal    = d.cout_total    != null ? d.cout_total.toLocaleString()    : '—';
+  const budgetRestant= d.budget_restant!= null ? d.budget_restant.toLocaleString(): '—';
+
+  cards.innerHTML = `
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-val ${dF-d0 > 0 ? 'red' : 'green'}">${dF-d0 > 0 ? '+' : ''}${(dF-d0).toFixed(1)}</div>
+        <div class="stat-lbl">Δ Densité</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val ${rF-r0 > 0 ? 'red' : 'green'}">${rF-r0 > 0 ? '+' : ''}${((rF-r0)*100).toFixed(1)}%</div>
+        <div class="stat-lbl">Δ Risque</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val">${coutTotal}</div>
+        <div class="stat-lbl">Dépensé (DT)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" style="color:#22C55E">${budgetRestant}</div>
+        <div class="stat-lbl">Restant (DT)</div>
+      </div>
+    </div>`;
+}
+
+// ── Map comparative ───────────────────────────────────────────
+async function runAllScenarios() {
+  const btn = document.getElementById('btnAllScenarios');
+  btn.disabled = true;
+  btn.textContent = 'Simulation…';
+  switchTab('map');
+
+  const sp  = document.getElementById('spMap');
+  const div = document.getElementById('mapContainer');
+  sp.style.display = 'flex';
+  sp.querySelector('span').textContent = 'Simulation 4 scénarios × 6 quartiers…';
+  div.style.display = 'none';
+
+  try {
+    const r = await fetch(`${API}/molka/simulate/all`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({}),
+    });
+    const d = await r.json();
+    _assertReady(d, r.status);
+    if (!d.resultats) throw new Error('Données de simulation manquantes');
+    renderMap(d);
+  } catch(e) {
+    sp.innerHTML = `<div class="err-box">❌ ${e.message}</div>`;
+    sp.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🗺 Comparer tous les scénarios';
+  }
+}
+
+let activeScenarioMap = 'rl';
+
+function renderMap(data) {
+  const sp  = document.getElementById('spMap');
+  const div = document.getElementById('mapContainer');
+
+  // Init Leaflet map once
+  if (!leafletMap) {
+    leafletMap = L.map('leafletMap', { zoomControl: true }).setView([36.82, 10.19], 12);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '© CartoDB', subdomains:'abcd', maxZoom:19,
+    }).addTo(leafletMap);
+  } else {
+    mapCircles.forEach(c => c.remove());
+    mapCircles = [];
+  }
+
+  // Draw circles for current scenario
+  function drawScenario(scenario) {
+    mapCircles.forEach(c => c.remove());
+    mapCircles = [];
+    Object.entries(data.resultats).forEach(([q, modes]) => {
+      const m = modes[scenario];
+      if (!m || !m.geo) return;
+      const [lat, lon] = m.geo.center;
+      const radius_km = (m.densite_finale || 10) * 300;  // visuel proportionnel
+      const color = m.color;
+
+      const circle = L.circle([lat, lon], {
+        color: color, fillColor: color, fillOpacity: 0.35, weight: 2,
+        radius: Math.max(200, Math.min(1800, radius_km)),
+      }).addTo(leafletMap);
+
+      circle.bindPopup(`
+        <div style="font-family:Space Mono,monospace;font-size:11px;line-height:1.7;min-width:160px">
+          <b style="color:${color}">${q}</b><br>
+          Densité : <b>${m.densite_finale}</b> ch/km²<br>
+          Risque : <b>${m.risque_final}</b><br>
+          Scénario : <b>${SCENARIO_LABELS[scenario]}</b>
+        </div>`);
+      mapCircles.push(circle);
+    });
+  }
+
+  drawScenario(activeScenarioMap);
+
+  // Scenario switcher buttons on map
+  const legendDiv = document.getElementById('mapLegend');
+  legendDiv.innerHTML = Object.entries(SCENARIO_LABELS).map(([k, v]) =>
+    `<button onclick="activeScenarioMap='${k}'; document.querySelectorAll('.map-scn-btn').forEach(b=>b.classList.remove('active')); this.classList.add('active'); (${drawScenario.toString()})('${k}')"
+      class="scn-btn map-scn-btn ${k === activeScenarioMap ? 'active' : ''}"
+      style="flex:1;min-width:120px">${v}</button>`
+  ).join('');
+
+  sp.style.display  = 'none';
+  div.style.display = 'block';
+  setTimeout(() => leafletMap.invalidateSize(), 100);
+}
+
+// ── PostMessage relay (cursor DOGSIM-TN) ─────────────────────
+document.addEventListener('mousemove', e => {
+  try { window.parent.postMessage({_dogSim:'move',x:e.clientX,y:e.clientY},'*'); } catch(_){}
+});
+document.addEventListener('mouseleave', () => {
+  try { window.parent.postMessage({_dogSim:'leave'},'*'); } catch(_){}
+});
+
+// ── Init ──────────────────────────────────────────────────────
+checkStatus();
+</script>
+</body>
+</html>

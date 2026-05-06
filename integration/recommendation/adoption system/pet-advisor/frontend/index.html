@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Happy Paws — DOGSIM-TN</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --y:#FFB800;--b:#060606;--w:#FFFFFF;--dg:#111111;--mg:#1E1E1E;
+      --tg:#666666;--border:#1A1A1A;--ysoft:rgba(255,184,0,0.08);
+      --fh:'Syne',sans-serif;--fb:'Inter',sans-serif;--fm:'Space Mono',monospace;
+    }
+
+    html,body{
+      min-height:100vh;background:var(--b);color:var(--w);
+      font-family:var(--fb);-webkit-font-smoothing:antialiased;overflow-x:hidden;
+    }
+
+    body{
+      display:flex;flex-direction:column;align-items:center;
+      justify-content:center;padding:48px 24px;
+    }
+
+    /* ── Header ── */
+    header{text-align:center;margin-bottom:64px;}
+
+    .brand{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:20px;}
+
+    .brand-logo{
+      font-family:var(--fh);font-size:22px;font-weight:800;
+      color:var(--y);letter-spacing:-.5px;
+    }
+
+    .brand-sep{width:1px;height:32px;background:var(--border);}
+
+    .brand-name{
+      font-family:var(--fh);font-size:22px;font-weight:800;
+      color:var(--w);letter-spacing:-.5px;
+    }
+
+    .header-tag{
+      display:inline-flex;align-items:center;gap:8px;
+      margin-bottom:16px;
+    }
+    .tag-dot{width:6px;height:6px;border-radius:50%;background:var(--y);}
+    .tag-text{
+      font-family:var(--fm);font-size:9px;font-weight:700;
+      color:rgba(255,184,0,.6);letter-spacing:.18em;text-transform:uppercase;
+    }
+
+    h1{
+      font-family:var(--fh);font-size:clamp(28px,5vw,48px);
+      font-weight:800;letter-spacing:-1.5px;line-height:1;margin-bottom:12px;
+    }
+    h1 span{color:var(--y);}
+
+    .subtitle{
+      font-family:var(--fb);font-size:13px;color:var(--tg);
+      letter-spacing:.02em;line-height:1.6;
+    }
+
+    /* ── Cards grid ── */
+    .cards{
+      display:grid;
+      grid-template-columns:repeat(var(--cols,2),1fr);
+      gap:1px;
+      max-width:960px;width:100%;
+      border:1px solid var(--border);
+    }
+    @media(max-width:600px){.cards{grid-template-columns:1fr;}}
+
+    .card{
+      background:var(--dg);
+      padding:36px 32px;
+      display:flex;flex-direction:column;gap:16px;
+      text-decoration:none;color:inherit;
+      position:relative;overflow:hidden;
+      transition:background .2s;
+      cursor:pointer;
+    }
+    .card::before{
+      content:'';position:absolute;inset:0;
+      background:var(--ysoft);
+      opacity:0;transition:opacity .2s;
+    }
+    .card:hover::before{opacity:1;}
+    .card:hover .card-arrow{color:var(--y);transform:translate(4px,-4px);}
+
+    .card-num{
+      font-family:var(--fm);font-size:9px;font-weight:700;
+      color:var(--tg);letter-spacing:.15em;margin-bottom:4px;
+    }
+
+    .card-icon{
+      font-size:1.8rem;margin-bottom:4px;
+      position:relative;z-index:1;
+    }
+
+    .card-title{
+      font-family:var(--fh);font-size:1.1rem;font-weight:700;
+      color:var(--w);position:relative;z-index:1;
+    }
+
+    .card-desc{
+      font-family:var(--fb);font-size:.82rem;color:var(--tg);
+      line-height:1.7;position:relative;z-index:1;flex:1;
+    }
+
+    .card-footer{
+      display:flex;align-items:center;justify-content:space-between;
+      position:relative;z-index:1;margin-top:8px;
+    }
+
+    .card-tag{
+      font-family:var(--fm);font-size:.68rem;font-weight:700;
+      letter-spacing:.07em;color:var(--y);
+      background:rgba(255,184,0,.1);
+      border:1px solid rgba(255,184,0,.2);
+      padding:4px 10px;border-radius:2px;
+    }
+
+    .card-arrow{
+      font-size:1rem;color:var(--tg);
+      transition:color .2s,transform .2s;
+    }
+
+    /* ── Divider between cards ── */
+    .cards .card+.card{border-left:1px solid var(--border);}
+    @media(max-width:600px){.cards .card+.card{border-left:none;border-top:1px solid var(--border);}}
+
+    /* ── Footer ── */
+    footer{
+      margin-top:48px;
+      display:flex;align-items:center;gap:0;
+      font-family:var(--fm);font-size:.68rem;color:var(--tg);
+      letter-spacing:.06em;text-transform:uppercase;
+      border-top:1px solid var(--border);
+      width:100%;max-width:960px;
+      padding-top:20px;
+    }
+    footer span{margin:0 12px;opacity:.3;}
+    footer a{color:var(--tg);text-decoration:none;transition:color .2s;}
+    footer a:hover{color:var(--y);}
+
+    /* ── Role badge ── */
+    .role-badge{
+      font-family:var(--fm);font-size:.68rem;font-weight:700;
+      color:var(--b);background:var(--y);
+      padding:4px 12px;border-radius:2px;
+      letter-spacing:.08em;text-transform:uppercase;
+      margin-top:14px;display:inline-block;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-tag">
+    <div class="tag-dot"></div>
+    <span class="tag-text">Platform Access</span>
+  </div>
+  <div class="brand">
+    <span class="brand-logo">DOGSIM-TN</span>
+    <div class="brand-sep"></div>
+    <span class="brand-name">Happy Paws</span>
+  </div>
+  <h1>AI <span>Services</span></h1>
+  <p class="subtitle">Select a module to get started</p>
+  <div class="role-badge" id="role-badge"></div>
+</header>
+
+<div class="cards" id="cards">
+
+  <!-- Maya — citizen only -->
+  <a class="card" data-role="citizen" href="/maya">
+    <div class="card-num">01</div>
+    <div class="card-icon">💬</div>
+    <div class="card-title">Maya — Pet Advisor</div>
+    <div class="card-desc">
+      AI adoption advisor that learns your lifestyle and matches you with the
+      perfect companion. Also searches shelter records from a lost-pet photo.
+    </div>
+    <div class="card-footer">
+      <span class="card-tag">ADOPTION · CHAT</span>
+      <span class="card-arrow">↗</span>
+    </div>
+  </a>
+
+  <!-- Ali — shelter only -->
+  <a class="card" data-role="agent" href="/ali">
+    <div class="card-num">02</div>
+    <div class="card-icon">🏠</div>
+    <div class="card-title">Ali — Shelter Assignment</div>
+    <div class="card-desc">
+      Upload an Excel file of incoming dogs. Ali distributes them across
+      shelters respecting capacity, budget, and medical constraints.
+    </div>
+    <div class="card-footer">
+      <span class="card-tag">ASSIGNMENT · SHELTERS</span>
+      <span class="card-arrow">↗</span>
+    </div>
+  </a>
+
+  <!-- Dr. Halim — everyone -->
+  <a class="card" data-role="all" href="/dr-halim">
+    <div class="card-num">03</div>
+    <div class="card-icon">🩺</div>
+    <div class="card-title">Dr. Halim — AI Vet</div>
+    <div class="card-desc">
+      Upload a photo or video to detect dog breed, analyse skin conditions,
+      and assess behavioural risk. Powered by deep learning models.
+    </div>
+    <div class="card-footer">
+      <span class="card-tag">BREED · SKIN · BEHAVIOUR</span>
+      <span class="card-arrow">↗</span>
+    </div>
+  </a>
+
+</div>
+
+<footer>
+  DOGSIM-TN
+  <span>·</span>
+  Happy Paws Animal Shelter
+  <span>·</span>
+  Powered by Groq AI + LangGraph
+  <span>·</span>
+  <a href="/docs">API docs</a>
+</footer>
+
+<script>
+(function(){
+  var params = new URLSearchParams(window.location.search);
+  var role   = params.get('role') || 'all'; // 'citizen' | 'agent' | 'all'
+
+  var labels = { citizen: 'Citoyen', agent: 'Employé Shelter', all: 'Admin' };
+  var badge  = document.getElementById('role-badge');
+  if(role !== 'all') badge.textContent = labels[role] || role;
+  else badge.style.display = 'none';
+
+  var cards   = document.querySelectorAll('#cards .card');
+  var visible = 0;
+
+  cards.forEach(function(card){
+    var cardRole = card.getAttribute('data-role');
+    // 'all' cards always show ; specific cards show only for matching role
+    var show = (cardRole === 'all') || (role === 'all') || (cardRole === role);
+    if(!show){
+      card.style.display = 'none';
+    } else {
+      visible++;
+    }
+  });
+
+  // Adjust grid columns
+  var cols = Math.min(visible, 3);
+  document.getElementById('cards').style.setProperty('--cols', cols);
+})();
+</script>
+</body>
+</html>
