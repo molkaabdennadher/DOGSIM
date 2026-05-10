@@ -65,7 +65,10 @@ except ImportError:
 _HERE            = os.path.dirname(os.path.abspath(__file__))
 MODELS_DIR       = os.path.normpath(os.path.join(_HERE, "..", "models"))
 _TACHE_RANIM_ROOT = os.path.normpath(os.path.join(_HERE, "..", "..", "tacheRanim"))
-OLLAMA_URL       = "http://127.0.0.1:11434/api/generate"
+OLLAMA_URL       = "http://127.0.0.1:11434/api/generate"   # kept for reference, not used
+GROQ_API_KEY_BREED = "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"
+GROQ_API_URL       = "https://api.groq.com/openai/v1/chat/completions"
+GROQ_MODEL_BREED   = "llama-3.3-70b-versatile"
 
 # ======================================================================
 #  FASTAPI APP
@@ -189,6 +192,70 @@ def _groq_fecal_recommendation(top_class: str, kb_info: dict) -> str | None:
         return None
 
 
+def _breed_recommendation(breed_name: str) -> str:
+    """Conseil de race : Ollama en priorité (validé prof), Groq en fallback."""
+    import requests as _req
+
+    prompt_fr = (
+        f"Tu es Dr Halim, vétérinaire IA bienveillant.\n"
+        f"Race détectée : {breed_name}.\n"
+        f"Rédige un conseil d'adoption en français, chaleureux et concis (5-6 phrases).\n"
+        f"Couvre : 1) Présentation  2) Tempérament  3) Enfants ?  "
+        f"4) Appartement ?  5) Exercice  6) Alimentation & entretien.\n"
+        f"Commence directement, sans salutation."
+    )
+
+    # ── 1. Ollama (priorité — validé) ──────────────────────────
+    for _model in ("llama3:latest", "llama3"):
+        try:
+            r = _req.post(
+                OLLAMA_URL,
+                json={"model": _model, "prompt": prompt_fr, "stream": False},
+                timeout=90,
+            )
+            if r.status_code == 200:
+                result = r.json().get("response", "").strip()
+                if result:
+                    print(f"[breed] Ollama OK (model={_model})")
+                    return result
+            else:
+                print(f"[breed] Ollama {_model} → HTTP {r.status_code}: {r.text[:200]}")
+        except Exception as e_ollama:
+            print(f"[breed] Ollama {_model} erreur : {e_ollama}")
+            break
+    print("[breed] Ollama indisponible — bascule sur Groq")
+
+    # ── 2. Groq (fallback si Ollama absent/éteint) ──────────────
+    try:
+        r = _req.post(
+            GROQ_API_URL,
+            headers={
+                "Content-Type":  "application/json",
+                "Authorization": f"Bearer {GROQ_API_KEY_BREED}",
+            },
+            json={
+                "model": GROQ_MODEL_BREED,
+                "messages": [
+                    {"role": "system", "content": "Tu es un vétérinaire expert. Réponds en français, de façon claire et empathique."},
+                    {"role": "user",   "content": prompt_fr},
+                ],
+                "max_tokens": 500,
+                "temperature": 0.7,
+            },
+            timeout=30,
+        )
+        r.raise_for_status()
+        result = r.json()["choices"][0]["message"]["content"].strip()
+        print("[breed] Groq fallback OK")
+        return result
+    except Exception as e_groq:
+        print(f"[breed] Groq erreur : {e_groq}")
+        return (
+            f"Conseil indisponible pour {breed_name}. "
+            f"Démarrez Ollama (`ollama serve`) ou vérifiez la connexion internet."
+        )
+
+
 def _color_profile(pil_img: Image.Image) -> dict:
     w, h = pil_img.size
     mx, my = int(w * 0.2), int(h * 0.2)
@@ -232,24 +299,7 @@ async def predict_breed(file: UploadFile = File(...)):
         breed_name = imagenet_name.split(",")[0].replace("_", " ").title()
         confidence = float(prob)
 
-    prompt = (
-        f"You are Dr Halim, a friendly AI veterinarian.\n"
-        f"The detected dog breed is: {breed_name}.\n"
-        f"Give a clear recommendation in English for someone adopting this dog.\n"
-        f"Cover: 1) Breed intro  2) Temperament  3) Good with children  "
-        f"4) Apartment-friendly  5) Exercise needs  6) Feeding  "
-        f"7) Grooming  8) Ideal owner.\nBe concise and warm."
-    )
-    recommendation = "Ollama not available - install and start Ollama with llama3 for recommendations."
-    try:
-        resp = requests.post(
-            OLLAMA_URL,
-            json={"model": "llama3", "prompt": prompt, "stream": False},
-            timeout=120,
-        )
-        recommendation = resp.json().get("response", recommendation)
-    except Exception:
-        pass
+    recommendation = _breed_recommendation(breed_name)
 
     return {"breed": breed_name, "confidence": confidence, "recommendation": recommendation}
 

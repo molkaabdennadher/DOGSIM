@@ -7,12 +7,22 @@ echo       Lancement de la demo...
 echo  =============================================
 echo.
 
+:: 0. OLLAMA — LLM local (port 11434)
+echo  [1/3] Demarrage Ollama (LLM local) ...
+tasklist /FI "IMAGENAME eq ollama.exe" 2>nul | find /I "ollama.exe" >nul
+if %errorlevel%==0 (
+    echo        Ollama est deja en cours d'execution. OK.
+) else (
+    start "Ollama Server" /min cmd /c "ollama serve"
+    echo        Ollama demarre en arriere-plan.
+)
+
 :: 1. DOGSIM-TN (Flask, port 8080)
-echo  [1/2] Demarrage DOGSIM-TN sur http://localhost:8080 ...
+echo  [2/3] Demarrage DOGSIM-TN sur http://localhost:8080 ...
 start "DOGSIM-TN Server" cmd /k "cd /d "%~dp0" && python server.py"
 
 :: 2. Happy Paws (uvicorn, port 8000) — Dr Halim demarre automatiquement
-echo  [2/2] Demarrage Happy Paws sur http://localhost:8000 ...
+echo  [3/3] Demarrage Happy Paws sur http://localhost:8000 ...
 start "Happy Paws Server" cmd /k "cd /d "%~dp0recommendation\adoption system\pet-advisor" && .venv\Scripts\uvicorn backend.main:app --port 8000"
 
 :: Attendre que les serveurs demarrent
@@ -27,11 +37,12 @@ start http://localhost:8080
 echo.
 echo  =============================================
 echo   Tout est lance !
+echo   Ollama LLM : http://localhost:11434
 echo   DOGSIM-TN  : http://localhost:8080
 echo   Happy Paws : http://localhost:8000
 echo   Dr. Halim  : demarre automatiquement
 echo.
-echo   Pour arreter : ferme les 2 fenetres noires
+echo   Pour arreter : ferme les fenetres noires
 echo  =============================================
 echo.
 pause

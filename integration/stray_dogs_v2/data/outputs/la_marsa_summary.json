@@ -1,12 +1,12 @@
 {
   "district": "La Marsa",
   "population": 92987,
-  "chiens_estimes": 11469,
+  "chiens_estimes": 11467,
   "niveau_risque": "Élevé",
   "confidence": 0.874,
   "bennes_recommandees": 300,
-  "bennes_placees": 254,
-  "intersections_osm": 1305,
+  "bennes_placees": 183,
+  "intersections_osm": 1228,
   "black_spots": 132,
-  "feeding_zones": 6
+  "feeding_zones": 7
 }

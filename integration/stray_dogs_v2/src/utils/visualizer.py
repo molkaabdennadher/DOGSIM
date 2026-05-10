@@ -215,8 +215,9 @@ def _draw_main_map(ax, bbox, lat_c, lon_c, s1, s2, s3,
         handles_legend.append(mpatches.Patch(color=RED, label=f"Points noirs ({len(pn)})"))
 
     # Bennes optimisées
-    if not s2["optimized_bins"].empty and "lat" in s2["optimized_bins"].columns:
-        opt = s2["optimized_bins"]
+    _opt_key = "recommended_bins" if "recommended_bins" in s2 else "optimized_bins"
+    if _opt_key in s2 and not s2[_opt_key].empty and "lat" in s2[_opt_key].columns:
+        opt = s2[_opt_key]
         ax.scatter(opt["lon"], opt["lat"], c="#00ff88", s=30, marker="o",
                    edgecolors="white", linewidth=0.5, zorder=5, alpha=0.85)
         handles_legend.append(mpatches.Patch(color="#00ff88", label="Bennes optimisées"))
@@ -310,7 +311,7 @@ def _draw_bins_comparison(ax, s2):
         stats.get("bennes_initiales", 0),
         stats.get("black_spots", 0),
         stats.get("clusters_dbscan", 0),
-        stats.get("bennes_optimisees", 0),
+        stats.get("bennes_placees", stats.get("bennes_optimisees", stats.get("nb_recommande", 0))),
     ]
     colors_b = [BLUE, RED, ORANGE, GREEN]
     bars = ax.bar(labels, vals, color=colors_b, alpha=0.8, edgecolor="#30363d")

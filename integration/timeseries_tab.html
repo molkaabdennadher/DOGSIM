@@ -196,8 +196,7 @@ html,body{height:100%;overflow-x:hidden;background:var(--b);color:var(--w);font-
     <div style="background:var(--dg);border:1px solid var(--border);border-radius:2px">
       <div class="chart-tabs">
         <button class="chart-tab active" onclick="switchTab('forecast')">Prévisions SARIMAX</button>
-        <button class="chart-tab" onclick="switchTab('stl')">Décomposition STL</button>
-        <button class="chart-tab" onclick="switchTab('metrics')">Métriques comparatives</button>
+        <button class="chart-tab" onclick="switchTab('corr')">Historique &amp; Maladies</button>
       </div>
 
       <!-- Forecast panel -->
@@ -209,27 +208,76 @@ html,body{height:100%;overflow-x:hidden;background:var(--b);color:var(--w);font-
         <div id="chartForecast" style="display:none"></div>
       </div>
 
-      <!-- STL panel -->
-      <div id="tabStl" style="padding:16px;display:none">
-        <div class="spinner" id="spStl">
+      <!-- Historique complet panel -->
+      <div id="tabCorr" style="padding:16px;display:none">
+        <div class="spinner" id="spCorr">
           <div class="spin-dot"></div><div class="spin-dot"></div><div class="spin-dot"></div>
-          <span>Sélectionner un quartier et lancer l'analyse</span>
+          <span>Chargement de l'historique…</span>
         </div>
-        <div id="chartStl" style="display:none"></div>
+        <div id="chartCorr" style="display:none">
+          <div id="chartDensiteHistory" style="margin-bottom:16px"></div>
+          <div id="chartMaladiesHistory"></div>
+        </div>
       </div>
+    </div>
 
-      <!-- Metrics panel -->
-      <div id="tabMetrics" style="padding:16px;display:none">
-        <div class="spinner" id="spMetrics">
-          <div class="spin-dot"></div><div class="spin-dot"></div><div class="spin-dot"></div>
-          <span>Cliquer sur "Toutes les métriques"</span>
-        </div>
-        <div id="chartMetrics" style="display:none"></div>
-      </div>
+    <!-- LLM Chat button -->
+    <div style="display:flex;justify-content:flex-end;padding:12px 0 0">
+      <button onclick="toggleLLM()" style="
+        display:flex;align-items:center;gap:8px;padding:10px 18px;
+        background:var(--y);border:none;color:var(--b);
+        font-family:var(--fm);font-size:10px;font-weight:700;
+        letter-spacing:.12em;text-transform:uppercase;cursor:pointer;border-radius:2px;
+        transition:opacity .15s;" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+        🤖 DOGSIM-AI
+      </button>
     </div>
 
   </div><!-- /content -->
 </div><!-- /layout -->
+
+<!-- ── LLM Panel ── -->
+<div id="llmPanel" style="
+  position:fixed;right:-440px;top:37px;bottom:0;width:420px;
+  background:var(--dg);border-left:1px solid var(--border);
+  display:flex;flex-direction:column;z-index:100;
+  transition:right .3s ease;">
+
+  <div style="padding:14px 16px;border-bottom:1px solid var(--border);
+    display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+    <div>
+      <div style="font-family:var(--fh);font-size:14px;font-weight:800;color:var(--y);">🤖 DOGSIM-AI</div>
+      <div style="font-family:var(--fm);font-size:9px;color:var(--tg);letter-spacing:.08em;margin-top:2px;">Analyste IA · Groq llama-3.3-70b</div>
+    </div>
+    <button onclick="toggleLLM()" style="background:none;border:none;color:var(--tg);cursor:pointer;font-size:18px;padding:4px;">✕</button>
+  </div>
+
+  <div id="llmMessages" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px">
+    <div style="background:var(--mg);border:1px solid var(--border);padding:12px;font-size:12px;color:var(--tg);line-height:1.6;font-family:var(--fb);">
+      Bonjour ! Je suis <strong style="color:var(--y)">DOGSIM-AI</strong>, votre analyste expert en gestion canine.<br><br>
+      Posez-moi des questions sur les prévisions, les risques, ou les recommandations pour un quartier.<br><br>
+      <span style="font-family:var(--fm);font-size:9px;color:rgba(255,184,0,.5)">Ex : "Quelle est la densité prévue à Ariana dans 4 semaines ?"</span>
+    </div>
+  </div>
+
+  <div style="padding:12px;border-top:1px solid var(--border);flex-shrink:0">
+    <div style="display:flex;gap:8px">
+      <input id="llmInput" type="text" placeholder="Votre question…"
+        style="flex:1;background:var(--mg);border:1px solid var(--border);color:var(--w);
+          padding:9px 12px;font-family:var(--fb);font-size:13px;outline:none;border-radius:2px;"
+        onkeydown="if(event.key==='Enter')sendLLM()"
+        onfocus="this.style.borderColor='var(--y)'" onblur="this.style.borderColor='var(--border)'">
+      <button onclick="sendLLM()" id="llmSendBtn" style="
+        padding:9px 14px;background:var(--y);border:none;color:var(--b);
+        font-family:var(--fm);font-size:11px;font-weight:700;cursor:pointer;border-radius:2px;">
+        ↗
+      </button>
+    </div>
+    <div style="font-family:var(--fm);font-size:8px;color:var(--tg);margin-top:6px;letter-spacing:.06em;">
+      Données SARIMAX + Q-Learning · Groq API
+    </div>
+  </div>
+</div>
 
 <script>
 // ── Config ────────────────────────────────────────────────────
@@ -288,13 +336,16 @@ async function checkStatus() {
 // ── Tab switching ─────────────────────────────────────────────
 function switchTab(name) {
   currentTab = name;
-  ['forecast','stl','metrics'].forEach(t => {
-    document.getElementById(`tab${t.charAt(0).toUpperCase()+t.slice(1)}`).style.display = t === name ? '' : 'none';
+  ['forecast','corr'].forEach(t => {
+    const el = document.getElementById(`tab${t.charAt(0).toUpperCase()+t.slice(1)}`);
+    if (el) el.style.display = t === name ? '' : 'none';
   });
   document.querySelectorAll('.chart-tab').forEach((el, i) => {
-    el.classList.toggle('active', ['forecast','stl','metrics'][i] === name);
+    el.classList.toggle('active', ['forecast','corr'][i] === name);
   });
+  if (name === 'corr' && !_corrLoaded) loadCorrelations();
 }
+let _corrLoaded = false;
 
 // ── Forecast ─────────────────────────────────────────────────
 async function runForecast() {
@@ -324,7 +375,6 @@ async function runForecast() {
 
     renderForecast(d);
     renderStats(d);
-    await runStl(currentQuartier);
   } catch(e) {
     sp.innerHTML = `<div class="err-box">❌ ${e.message}</div>`;
     sp.style.display = 'block';
@@ -424,114 +474,155 @@ function renderStats(d) {
     </div>`;
 }
 
-// ── STL ───────────────────────────────────────────────────────
-async function runStl(quartier) {
-  const sp  = document.getElementById('spStl');
-  const div = document.getElementById('chartStl');
+// ── Historique complet (Cell 6) ───────────────────────────────
+async function loadCorrelations() {
+  const sp  = document.getElementById('spCorr');
+  const div = document.getElementById('chartCorr');
   sp.style.display = 'flex';
-  sp.querySelector('span').textContent = 'Décomposition STL…';
+  sp.querySelector('span').textContent = "Chargement de l'historique…";
   div.style.display = 'none';
 
   try {
-    const r = await fetch(`${API}/molka/stl/${encodeURIComponent(quartier)}`);
-    const d = await r.json();
+    const r    = await fetch(`${API}/molka/timeseries`, { signal: AbortSignal.timeout(30000) });
+    const text = await r.text();
+    let d;
+    try {
+      d = JSON.parse(text);
+    } catch(_) {
+      throw new Error(`Endpoint /molka/timeseries inaccessible (HTTP ${r.status}) — redémarrez le serveur Flask`);
+    }
     _assertReady(d, r.status);
-    if (!d.dates) throw new Error('Données STL manquantes');
-    renderStl(d);
+    renderTimeseries(d);
+    _corrLoaded = true;
   } catch(e) {
     sp.innerHTML = `<div class="err-box">❌ ${e.message}</div>`;
     sp.style.display = 'block';
   }
 }
 
-function renderStl(d) {
-  const sp  = document.getElementById('spStl');
-  const div = document.getElementById('chartStl');
-  const col = COLORS[d.quartier] || '#FFB800';
+function renderTimeseries(d) {
+  const sp  = document.getElementById('spCorr');
+  const div = document.getElementById('chartCorr');
 
-  const traces = [
-    { x:d.dates, y:d.observed, name:'Observé',  type:'scatter', mode:'lines', line:{color:'#666',width:1}, yaxis:'y1' },
-    { x:d.dates, y:d.trend,    name:'Tendance', type:'scatter', mode:'lines', line:{color:col, width:2},   yaxis:'y2' },
-    { x:d.dates, y:d.seasonal, name:'Saisonnalité', type:'scatter', mode:'lines', line:{color:'#7F77DD',width:1.2}, yaxis:'y3' },
-    { x:d.dates, y:d.resid,    name:'Résidu',   type:'scatter', mode:'lines', line:{color:'#1D9E75',width:1}, yaxis:'y4' },
-  ];
+  const dates    = d.dates    || [];
+  const quartiers= d.quartiers|| {};
+  const maladies = d.maladies || {};
+  const shading  = d.shading  || [];
+  const colors   = d.colors   || {};
 
-  const layout = {
-    ...LAYOUT_BASE,
-    title: { text: `STL — ${d.quartier}`, font:{size:13,color:'#fff'}, x:0.01 },
-    grid: { rows:4, columns:1, pattern:'independent' },
-    yaxis:  { ...LAYOUT_BASE.yaxis, domain:[0.78,1.00], title:{text:'Observé',font:{size:9,color:'#666'}} },
-    yaxis2: { ...LAYOUT_BASE.yaxis, domain:[0.52,0.74], title:{text:'Tendance',font:{size:9,color:'#666'}} },
-    yaxis3: { ...LAYOUT_BASE.yaxis, domain:[0.26,0.48], title:{text:'Saisonnalité',font:{size:9,color:'#666'}} },
-    yaxis4: { ...LAYOUT_BASE.yaxis, domain:[0.00,0.22], title:{text:'Résidu',font:{size:9,color:'#666'}} },
-    height: 600,
-    showlegend: false,
+  // ── Shapes de fond (Été / Ramadan) ───────────────────────
+  const shapes = shading.map(s => ({
+    type:'rect', xref:'x', yref:'paper',
+    x0: s.start, x1: s.end, y0: 0, y1: 1,
+    fillcolor: s.color, line: { width: 0 },
+    layer: 'below',
+  }));
+
+  // ── Chart 1 : Densité 6 quartiers ────────────────────────
+  const QUARTIER_COLORS = {
+    'Bab Souika':'#4C9BE8','La Medina':'#4CAF6E',
+    'Le Bardo':'#9C86D4','Ben Arous':'#D4547E',
+    'Ariana':'#EF9F27','La Marsa':'#E24B4A',
   };
+  const densTraces = Object.entries(quartiers).map(([q, vals]) => ({
+    x: dates, y: vals, name: q, type: 'scatter', mode: 'lines',
+    line: { color: colors[q] || QUARTIER_COLORS[q] || '#FFB800', width: 1.3 },
+    hovertemplate: `<b>${q}</b><br>%{x}<br>%{y:.1f} ch/km²<extra></extra>`,
+  }));
 
-  Plotly.newPlot(div, traces, layout, {responsive:true, displayModeBar:false});
+  Plotly.newPlot('chartDensiteHistory', densTraces, {
+    ...LAYOUT_BASE,
+    title: { text: 'Densité de chiens errants — 6 quartiers de Tunis', font:{size:13,color:'#fff'}, x:0.01 },
+    xaxis: { ...LAYOUT_BASE.xaxis, title: '', type: 'date', tickformat: '%Y' },
+    yaxis: { ...LAYOUT_BASE.yaxis, title: 'Chiens / km²' },
+    height: 320,
+    shapes,
+    legend: { bgcolor:'transparent', font:{size:10}, orientation:'h', y:-0.22 },
+    margin: { l:55, r:20, t:45, b:80 },
+  }, { responsive:true, displayModeBar:false });
+
+  // ── Chart 2 : Maladies + Risque composite ────────────────
+  const maladie_traces = [
+    { key:'rage',   name:'Rage (pic été)',          color:'#E24B4A', dash:'solid' },
+    { key:'parvo',  name:'Parvovirus (pic print.)', color:'#EF9F27', dash:'solid' },
+    { key:'lepto',  name:'Leptospirose (aut/hiv)',  color:'#378ADD', dash:'solid' },
+    { key:'risque', name:'Risque composite',         color:'#FFFFFF', dash:'dash'  },
+  ].map(({ key, name, color, dash }) => ({
+    x: dates,
+    y: maladies[key] || [],
+    name,
+    type: 'scatter', mode: 'lines',
+    line: { color, width: key === 'risque' ? 2 : 1.5, dash },
+    hovertemplate: `<b>${name}</b><br>%{x}<br>%{y:.3f}<extra></extra>`,
+  }));
+
+  Plotly.newPlot('chartMaladiesHistory', maladie_traces, {
+    ...LAYOUT_BASE,
+    title: { text: 'Taux de maladies + risque composite (moyenne tous quartiers)', font:{size:13,color:'#fff'}, x:0.01 },
+    xaxis: { ...LAYOUT_BASE.xaxis, title: '', type: 'date', tickformat: '%Y' },
+    yaxis: { ...LAYOUT_BASE.yaxis, title: 'Taux' },
+    height: 300,
+    shapes,
+    legend: { bgcolor:'transparent', font:{size:10}, orientation:'h', y:-0.25 },
+    margin: { l:55, r:20, t:45, b:90 },
+  }, { responsive:true, displayModeBar:false });
+
   sp.style.display  = 'none';
   div.style.display = 'block';
 }
 
-// ── All metrics ───────────────────────────────────────────────
-async function loadMetrics() {
-  const btn = document.getElementById('btnAllMetrics');
-  btn.disabled = true;
-  btn.textContent = 'Chargement…';
-  switchTab('metrics');
+// ── LLM Panel ────────────────────────────────────────────────
+let _llmOpen = false;
+function toggleLLM() {
+  _llmOpen = !_llmOpen;
+  document.getElementById('llmPanel').style.right = _llmOpen ? '0' : '-440px';
+}
 
-  const sp  = document.getElementById('spMetrics');
-  const div = document.getElementById('chartMetrics');
-  sp.style.display = 'flex';
-  sp.querySelector('span').textContent = 'Récupération des métriques…';
-  div.style.display = 'none';
+async function sendLLM() {
+  const input = document.getElementById('llmInput');
+  const q = input.value.trim();
+  if (!q) return;
+
+  const msgs = document.getElementById('llmMessages');
+  const btn  = document.getElementById('llmSendBtn');
+
+  // User bubble
+  msgs.innerHTML += `<div style="align-self:flex-end;background:var(--y);color:var(--b);
+    padding:10px 14px;font-size:12px;font-family:var(--fb);line-height:1.5;max-width:85%;
+    border-radius:2px;">${q}</div>`;
+  input.value = '';
+  btn.disabled = true;
+  btn.textContent = '…';
+
+  // Thinking bubble
+  const thinkId = 'think_' + Date.now();
+  msgs.innerHTML += `<div id="${thinkId}" style="background:var(--mg);border:1px solid var(--border);
+    padding:10px 14px;font-size:11px;color:var(--tg);font-family:var(--fm);">
+    ⏳ DOGSIM-AI analyse…</div>`;
+  msgs.scrollTop = msgs.scrollHeight;
 
   try {
-    const r = await fetch(`${API}/molka/metrics`);
+    const r = await fetch(`${API}/molka/llm`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ question: q }),
+    });
     const d = await r.json();
-    _assertReady(d, r.status);
-    if (!d.metrics) throw new Error('Métriques indisponibles');
-    renderMetrics(d.metrics);
+    if (d.error) throw new Error(d.error);
+
+    const answer = d.answer.replace(/\n/g, '<br>');
+    document.getElementById(thinkId).outerHTML = `
+      <div style="background:var(--mg);border:1px solid var(--border);
+        padding:12px 14px;font-size:12px;color:var(--w);font-family:var(--fb);
+        line-height:1.7;max-width:95%;">${answer}</div>`;
   } catch(e) {
-    sp.innerHTML = `<div class="err-box">❌ ${e.message}</div>`;
-    sp.style.display = 'block';
+    document.getElementById(thinkId).outerHTML = `
+      <div class="err-box">❌ ${e.message}</div>`;
   } finally {
     btn.disabled = false;
-    btn.textContent = '📊 Toutes les métriques';
+    btn.textContent = '↗';
+    msgs.scrollTop = msgs.scrollHeight;
   }
-}
-
-function renderMetrics(metrics) {
-  const sp  = document.getElementById('spMetrics');
-  const div = document.getElementById('chartMetrics');
-
-  const quartiers = Object.keys(metrics);
-  const maes  = quartiers.map(q => metrics[q].mae);
-  const rmses = quartiers.map(q => metrics[q].rmse);
-  const aics  = quartiers.map(q => metrics[q].aic);
-  const cols  = quartiers.map(q => COLORS[q] || '#FFB800');
-
-  const traces = [
-    { name:'MAE',  x:quartiers, y:maes,  type:'bar', marker:{color:cols}, yaxis:'y1' },
-    { name:'RMSE', x:quartiers, y:rmses, type:'bar', marker:{color:cols, opacity:0.6}, yaxis:'y1' },
-    { name:'AIC',  x:quartiers, y:aics,  type:'scatter', mode:'lines+markers',
-      line:{color:'#FFB800',width:2}, marker:{color:'#FFB800',size:8}, yaxis:'y2' },
-  ];
-
-  const layout = {
-    ...LAYOUT_BASE,
-    title: { text: 'Métriques SARIMAX — Tous les quartiers', font:{size:13,color:'#fff'}, x:0.01 },
-    barmode: 'group',
-    yaxis:  { ...LAYOUT_BASE.yaxis, title:'MAE / RMSE (ch/km²)' },
-    yaxis2: { ...LAYOUT_BASE.yaxis, title:'AIC', overlaying:'y', side:'right',
-              tickfont:{size:10,color:'#FFB800'} },
-    height: 350,
-    legend: { ...LAYOUT_BASE.legend, orientation:'h', y:1.12 },
-  };
-
-  Plotly.newPlot(div, traces, layout, {responsive:true, displayModeBar:false});
-  sp.style.display  = 'none';
-  div.style.display = 'block';
 }
 
 // ── PostMessage relay (cursor DOGSIM-TN) ─────────────────────

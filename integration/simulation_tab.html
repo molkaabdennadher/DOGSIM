@@ -228,6 +228,8 @@ html,body{height:100%;overflow-x:hidden;background:var(--b);color:var(--w);font-
       <div class="chart-tabs">
         <button class="chart-tab active" onclick="switchTab('curves')">Courbes densité/risque</button>
         <button class="chart-tab" onclick="switchTab('policy')">Politique RL</button>
+        <button class="chart-tab" onclick="switchTab('optpol')">Politique Optimale</button>
+        <button class="chart-tab" onclick="switchTab('scenarios')">Comparaison scénarios</button>
         <button class="chart-tab" onclick="switchTab('map')">Carte comparative</button>
       </div>
 
@@ -249,6 +251,27 @@ html,body{height:100%;overflow-x:hidden;background:var(--b);color:var(--w);font-
         <div id="policyTable" style="display:none;overflow-x:auto;max-height:500px;overflow-y:auto"></div>
       </div>
 
+      <!-- Politique Optimale (Cell 16) -->
+      <div id="tabOptpol" style="padding:16px;display:none">
+        <div class="spinner" id="spOptpol">
+          <div class="spin-dot"></div><div class="spin-dot"></div><div class="spin-dot"></div>
+          <span>Cliquer sur "Comparer tous les scénarios" pour entraîner les 6 quartiers</span>
+        </div>
+        <div id="chartOptpol" style="display:none"></div>
+      </div>
+
+      <!-- Comparaison scénarios (Cell 16 part 2) -->
+      <div id="tabScenarios" style="padding:16px;display:none">
+        <div class="spinner" id="spScenarios">
+          <div class="spin-dot"></div><div class="spin-dot"></div><div class="spin-dot"></div>
+          <span>Cliquer sur "Comparer tous les scénarios"</span>
+        </div>
+        <div id="chartScenarios" style="display:none">
+          <div id="chartScenDensity" style="margin-bottom:16px"></div>
+          <div id="chartScenRisk"></div>
+        </div>
+      </div>
+
       <!-- Map -->
       <div id="tabMap" style="padding:16px;display:none">
         <div class="spinner" id="spMap">
@@ -262,8 +285,56 @@ html,body{height:100%;overflow-x:hidden;background:var(--b);color:var(--w);font-
       </div>
     </div>
 
+    <!-- LLM button -->
+    <div style="display:flex;justify-content:flex-end;padding:12px 0 0">
+      <button onclick="toggleLLM()" style="
+        display:flex;align-items:center;gap:8px;padding:10px 18px;
+        background:var(--y);border:none;color:var(--b);
+        font-family:var(--fm);font-size:10px;font-weight:700;
+        letter-spacing:.12em;text-transform:uppercase;cursor:pointer;border-radius:2px;"
+        onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+        🤖 DOGSIM-AI
+      </button>
+    </div>
+
   </div><!-- /content -->
 </div><!-- /layout -->
+
+<!-- ── LLM Panel ── -->
+<div id="llmPanel" style="
+  position:fixed;right:-440px;top:37px;bottom:0;width:420px;
+  background:var(--dg);border-left:1px solid var(--border);
+  display:flex;flex-direction:column;z-index:100;
+  transition:right .3s ease;">
+  <div style="padding:14px 16px;border-bottom:1px solid var(--border);
+    display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+    <div>
+      <div style="font-family:var(--fh);font-size:14px;font-weight:800;color:var(--y);">🤖 DOGSIM-AI</div>
+      <div style="font-family:var(--fm);font-size:9px;color:var(--tg);letter-spacing:.08em;margin-top:2px;">Analyste IA · Groq llama-3.3-70b</div>
+    </div>
+    <button onclick="toggleLLM()" style="background:none;border:none;color:var(--tg);cursor:pointer;font-size:18px;padding:4px;">✕</button>
+  </div>
+  <div id="llmMessages" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px">
+    <div style="background:var(--mg);border:1px solid var(--border);padding:12px;font-size:12px;color:var(--tg);line-height:1.6;font-family:var(--fb);">
+      Bonjour ! Je suis <strong style="color:var(--y)">DOGSIM-AI</strong>.<br><br>
+      Posez des questions sur les simulations RL, la politique optimale, ou les scénarios par quartier.<br><br>
+      <span style="font-family:var(--fm);font-size:9px;color:rgba(255,184,0,.5)">Ex : "Quel scénario est le meilleur pour Ariana ?"</span>
+    </div>
+  </div>
+  <div style="padding:12px;border-top:1px solid var(--border);flex-shrink:0">
+    <div style="display:flex;gap:8px">
+      <input id="llmInput" type="text" placeholder="Votre question…"
+        style="flex:1;background:var(--mg);border:1px solid var(--border);color:var(--w);
+          padding:9px 12px;font-family:var(--fb);font-size:13px;outline:none;border-radius:2px;"
+        onkeydown="if(event.key==='Enter')sendLLM()"
+        onfocus="this.style.borderColor='var(--y)'" onblur="this.style.borderColor='var(--border)'">
+      <button onclick="sendLLM()" id="llmSendBtn" style="
+        padding:9px 14px;background:var(--y);border:none;color:var(--b);
+        font-family:var(--fm);font-size:11px;font-weight:700;cursor:pointer;border-radius:2px;">↗</button>
+    </div>
+    <div style="font-family:var(--fm);font-size:8px;color:var(--tg);margin-top:6px;letter-spacing:.06em;">Données SARIMAX + Q-Learning · Groq API</div>
+  </div>
+</div>
 
 <script>
 // ── Config ────────────────────────────────────────────────────
@@ -329,14 +400,15 @@ async function checkStatus() {
 }
 
 // ── Tab switching ─────────────────────────────────────────────
+const ALL_TABS = ['curves','policy','optpol','scenarios','map'];
 function switchTab(name) {
   currentTab = name;
-  ['curves','policy','map'].forEach(t => {
+  ALL_TABS.forEach(t => {
     const el = document.getElementById(`tab${t.charAt(0).toUpperCase()+t.slice(1)}`);
     if (el) el.style.display = t === name ? '' : 'none';
   });
   document.querySelectorAll('.chart-tab').forEach((el, i) => {
-    el.classList.toggle('active', ['curves','policy','map'][i] === name);
+    el.classList.toggle('active', ALL_TABS[i] === name);
   });
   if (name === 'map' && leafletMap) setTimeout(() => leafletMap.invalidateSize(), 100);
 }
@@ -644,36 +716,197 @@ function renderStatsBudget(d) {
     </div>`;
 }
 
-// ── Map comparative ───────────────────────────────────────────
+// ── Map comparative + Politique + Scénarios ───────────────────
 async function runAllScenarios() {
   const btn = document.getElementById('btnAllScenarios');
   btn.disabled = true;
   btn.textContent = 'Simulation…';
   switchTab('map');
 
-  const sp  = document.getElementById('spMap');
-  const div = document.getElementById('mapContainer');
-  sp.style.display = 'flex';
-  sp.querySelector('span').textContent = 'Simulation 4 scénarios × 6 quartiers…';
-  div.style.display = 'none';
+  // Spinners on all three tabs
+  ['spMap','spOptpol','spScenarios'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.style.display = 'flex'; }
+  });
+  ['mapContainer','chartOptpol','chartScenarios'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  const spMap = document.getElementById('spMap');
+  if (spMap && spMap.querySelector('span'))
+    spMap.querySelector('span').textContent = 'Simulation 4 scénarios × 6 quartiers…';
 
   try {
-    const r = await fetch(`${API}/molka/simulate/all`, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({}),
-    });
-    const d = await r.json();
-    _assertReady(d, r.status);
-    if (!d.resultats) throw new Error('Données de simulation manquantes');
-    renderMap(d);
+    const [rMap, rPol, rScen] = await Promise.all([
+      fetch(`${API}/molka/simulate/all`, {
+        method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({}),
+      }),
+      fetch(`${API}/molka/politique`, {
+        method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({}),
+      }),
+      fetch(`${API}/molka/scenarios/compare`, {
+        method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({}),
+      }),
+    ]);
+
+    const [dMap, dPol, dScen] = await Promise.all([rMap.json(), rPol.json(), rScen.json()]);
+
+    // Map
+    _assertReady(dMap, rMap.status);
+    if (!dMap.resultats) throw new Error('Données de simulation manquantes');
+    renderMap(dMap);
+
+    // Politique optimale
+    if (dPol.politique) renderOptimalPolicy(dPol);
+    else {
+      const sp = document.getElementById('spOptpol');
+      if (sp) { sp.innerHTML = `<div class="err-box">❌ ${dPol.error || 'Erreur politique'}</div>`; sp.style.display='block'; }
+    }
+
+    // Comparaison scénarios
+    if (dScen.scenarios) renderScenarioComparison(dScen);
+    else {
+      const sp = document.getElementById('spScenarios');
+      if (sp) { sp.innerHTML = `<div class="err-box">❌ ${dScen.error || 'Erreur scénarios'}</div>`; sp.style.display='block'; }
+    }
+
   } catch(e) {
-    sp.innerHTML = `<div class="err-box">❌ ${e.message}</div>`;
-    sp.style.display = 'block';
+    ['spMap','spOptpol','spScenarios'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.innerHTML = `<div class="err-box">❌ ${e.message}</div>`; el.style.display='block'; }
+    });
   } finally {
     btn.disabled = false;
     btn.textContent = '🗺 Comparer tous les scénarios';
   }
+}
+
+// ── Render : Politique Optimale (heatmaps 3×3) ───────────────
+function renderOptimalPolicy(data) {
+  const sp  = document.getElementById('spOptpol');
+  const div = document.getElementById('chartOptpol');
+
+  const quartiers = data.quartiers || Object.keys(data.politique);
+  const politique = data.politique;
+
+  div.innerHTML = `
+    <div style="margin-bottom:12px;font-family:var(--fm);font-size:9px;color:var(--tg);letter-spacing:.08em;">
+      POLITIQUE OPTIMALE Q-LEARNING · SAISON : ÉTÉ (la plus critique) · GRILLE 3×3 ÉTATS
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px" id="optpolGrid"></div>
+    <div style="margin-top:14px;display:flex;gap:16px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:6px;font-family:var(--fm);font-size:9px;color:var(--tg)"><div style="width:12px;height:12px;background:#27ae60;border-radius:1px"></div>A0 — Rien faire</div>
+      <div style="display:flex;align-items:center;gap:6px;font-family:var(--fm);font-size:9px;color:var(--tg)"><div style="width:12px;height:12px;background:#f39c12;border-radius:1px"></div>A1 — Vaccination</div>
+      <div style="display:flex;align-items:center;gap:6px;font-family:var(--fm);font-size:9px;color:var(--tg)"><div style="width:12px;height:12px;background:#e67e22;border-radius:1px"></div>A2 — CNVR</div>
+      <div style="display:flex;align-items:center;gap:6px;font-family:var(--fm);font-size:9px;color:var(--tg)"><div style="width:12px;height:12px;background:#c0392b;border-radius:1px"></div>A3 — Combo Vacc+CNVR</div>
+    </div>`;
+
+  const grid = document.getElementById('optpolGrid');
+
+  // Colorscale : action 0→1→2→3
+  const colorscale = [
+    [0,    '#27ae60'],[0.001,'#27ae60'],
+    [0.33, '#f39c12'],[0.331,'#f39c12'],
+    [0.66, '#e67e22'],[0.661,'#e67e22'],
+    [0.999,'#c0392b'],[1,    '#c0392b'],
+  ];
+
+  quartiers.forEach(q => {
+    const pol = politique[q];
+    if (!pol) return;
+    const cellId = `optpol_${q.replace(/[\s']/g,'_')}`;
+    const cellDiv = document.createElement('div');
+    cellDiv.id = cellId;
+    cellDiv.style.cssText = 'background:var(--mg);border:1px solid var(--border);border-radius:2px;padding:6px';
+    grid.appendChild(cellDiv);
+
+    const z    = pol.grid.map(row => row.map(cell => cell.action));
+    const text = pol.grid.map(row => row.map(cell => cell.label));
+    const col  = COLORS[q] || '#FFB800';
+
+    Plotly.newPlot(cellDiv, [{
+      type:'heatmap', z, x:pol.labels_risque, y:pol.labels_densite,
+      text, texttemplate:'%{text}',
+      textfont:{ size:10, color:'#fff', family:'Space Mono,monospace' },
+      colorscale, showscale:false, zmin:0, zmax:3,
+      hovertemplate:'<b>%{y}</b> × <b>%{x}</b><br>Action : %{text}<extra></extra>',
+    }], {
+      paper_bgcolor:'transparent', plot_bgcolor:'#0d0d0d',
+      font:{ family:'Inter,sans-serif', color:'#fff', size:10 },
+      title:{ text:`<b style="color:${col}">${q}</b>`, font:{size:11,color:col}, x:0.01 },
+      xaxis:{ tickfont:{size:8,color:'#666'}, showgrid:false },
+      yaxis:{ tickfont:{size:8,color:'#666'}, showgrid:false },
+      margin:{ l:85, r:8, t:32, b:60 },
+      height:220,
+    }, { responsive:true, displayModeBar:false });
+  });
+
+  sp.style.display  = 'none';
+  div.style.display = 'block';
+}
+
+// ── Render : Comparaison scénarios (bar charts) ───────────────
+function renderScenarioComparison(data) {
+  const sp  = document.getElementById('spScenarios');
+  const div = document.getElementById('chartScenarios');
+
+  const quartiers  = data.quartiers || Object.keys(data.scenarios);
+  const scenarios  = data.scenarios;
+  const scenKeys   = ['rien','vacc','cnvr','rl'];
+  const scenColors = { rien:'#EF4444', vacc:'#22C55E', cnvr:'#378ADD', rl:'#FFB800' };
+  const scenLabels = { rien:'Rien faire', vacc:'Vaccination', cnvr:'CNVR', rl:'RL Optimal' };
+
+  // ── Densité finale grouped bar ────────────────────────────
+  const denTraces = scenKeys.map(s => ({
+    x: quartiers,
+    y: quartiers.map(q => { const ds = scenarios[q]?.[s]?.densites||[]; return ds.length ? ds[ds.length-1] : 0; }),
+    name: scenLabels[s],
+    type: 'bar',
+    marker: { color: scenColors[s], opacity: 0.85 },
+    text: quartiers.map(q => { const ds = scenarios[q]?.[s]?.densites||[]; return ds.length ? ds[ds.length-1].toFixed(1) : '0'; }),
+    textposition: 'outside',
+    textfont: { size: 9, color: '#aaa' },
+  }));
+
+  Plotly.newPlot('chartScenDensity', denTraces, {
+    ...LAYOUT_BASE,
+    title:{ text:'Densité finale (ch/km²) — 26 semaines · 4 scénarios', font:{size:13,color:'#fff'}, x:0.01 },
+    barmode:'group',
+    xaxis:{ ...LAYOUT_BASE.xaxis, title:'' },
+    yaxis:{ ...LAYOUT_BASE.yaxis, title:'Densité (ch/km²)' },
+    height: 320,
+    legend:{ bgcolor:'transparent', font:{size:10}, orientation:'h', y:-0.25 },
+    margin:{ l:50, r:20, t:50, b:90 },
+  }, { responsive:true, displayModeBar:false });
+
+  // ── Risque final grouped bar ──────────────────────────────
+  const riskTraces = scenKeys.map(s => ({
+    x: quartiers,
+    y: quartiers.map(q => { const rs = scenarios[q]?.[s]?.risques||[]; return rs.length ? rs[rs.length-1] : 0; }),
+    name: scenLabels[s],
+    type: 'bar',
+    marker: { color: scenColors[s], opacity: 0.85 },
+    text: quartiers.map(q => {
+      const rs = scenarios[q]?.[s]?.risques||[];
+      return rs.length ? (rs[rs.length-1]*100).toFixed(1)+'%' : '0%';
+    }),
+    textposition: 'outside',
+    textfont: { size: 9, color: '#aaa' },
+  }));
+
+  Plotly.newPlot('chartScenRisk', riskTraces, {
+    ...LAYOUT_BASE,
+    title:{ text:'Risque sanitaire final — 26 semaines · 4 scénarios', font:{size:13,color:'#fff'}, x:0.01 },
+    barmode:'group',
+    xaxis:{ ...LAYOUT_BASE.xaxis, title:'' },
+    yaxis:{ ...LAYOUT_BASE.yaxis, title:'Risque sanitaire' },
+    height: 320,
+    legend:{ bgcolor:'transparent', font:{size:10}, orientation:'h', y:-0.25 },
+    margin:{ l:50, r:20, t:50, b:90 },
+  }, { responsive:true, displayModeBar:false });
+
+  sp.style.display  = 'none';
+  div.style.display = 'block';
 }
 
 let activeScenarioMap = 'rl';
@@ -733,6 +966,56 @@ function renderMap(data) {
   sp.style.display  = 'none';
   div.style.display = 'block';
   setTimeout(() => leafletMap.invalidateSize(), 100);
+}
+
+// ── LLM Panel ────────────────────────────────────────────────
+let _llmOpen = false;
+function toggleLLM() {
+  _llmOpen = !_llmOpen;
+  document.getElementById('llmPanel').style.right = _llmOpen ? '0' : '-440px';
+}
+
+async function sendLLM() {
+  const input = document.getElementById('llmInput');
+  const q = input.value.trim();
+  if (!q) return;
+
+  const msgs = document.getElementById('llmMessages');
+  const btn  = document.getElementById('llmSendBtn');
+
+  msgs.innerHTML += `<div style="align-self:flex-end;background:var(--y);color:var(--b);
+    padding:10px 14px;font-size:12px;font-family:var(--fb);line-height:1.5;max-width:85%;
+    border-radius:2px;">${q}</div>`;
+  input.value = '';
+  btn.disabled = true;
+  btn.textContent = '…';
+
+  const thinkId = 'think_' + Date.now();
+  msgs.innerHTML += `<div id="${thinkId}" style="background:var(--mg);border:1px solid var(--border);
+    padding:10px 14px;font-size:11px;color:var(--tg);font-family:var(--fm);">
+    ⏳ DOGSIM-AI analyse…</div>`;
+  msgs.scrollTop = msgs.scrollHeight;
+
+  try {
+    const r = await fetch(`${API}/molka/llm`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ question: q }),
+    });
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+    const answer = d.answer.replace(/\n/g,'<br>');
+    document.getElementById(thinkId).outerHTML = `
+      <div style="background:var(--mg);border:1px solid var(--border);
+        padding:12px 14px;font-size:12px;color:var(--w);font-family:var(--fb);
+        line-height:1.7;max-width:95%;">${answer}</div>`;
+  } catch(e) {
+    document.getElementById(thinkId).outerHTML = `<div class="err-box">❌ ${e.message}</div>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '↗';
+    msgs.scrollTop = msgs.scrollHeight;
+  }
 }
 
 // ── PostMessage relay (cursor DOGSIM-TN) ─────────────────────

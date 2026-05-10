@@ -1,46 +1,114 @@
 lat,lon,type,nom,category,source
-36.88733199341639,10.31689875046594,restaurant,Restaurant 1,food,simulé
-36.88937356947902,10.313832907543782,restaurant,Restaurant 2,food,simulé
-36.88608392110377,10.309978012680897,restaurant,Restaurant 3,food,simulé
-36.88552457106588,10.316162558347868,restaurant,Restaurant 4,food,simulé
-36.88862606232267,10.31478572923648,restaurant,Restaurant 5,food,simulé
-36.8853103971041,10.317065912956568,restaurant,Restaurant 6,food,simulé
-36.889947276196374,10.310468683911433,restaurant,Restaurant 7,food,simulé
-36.886231312390706,10.31021670983361,restaurant,Restaurant 8,food,simulé
-36.88693049131613,10.313189338909227,restaurant,Restaurant 9,food,simulé
-36.887659858057276,10.311155689844503,restaurant,Restaurant 10,food,simulé
-36.88868739109704,10.309834318336105,restaurant,Restaurant 11,food,simulé
-36.88686139663143,10.31180997547614,restaurant,Restaurant 12,food,simulé
-36.887797646350656,10.315457176342196,restaurant,Restaurant 13,food,simulé
-36.88633325482637,10.313097709183483,restaurant,Restaurant 14,food,simulé
-36.888576370265184,10.309024058774133,restaurant,Restaurant 15,food,simulé
-36.88866278596895,10.31010454227872,restaurant,Restaurant 16,food,simulé
-36.88556436827024,10.316882824812618,restaurant,Restaurant 17,food,simulé
-36.890707979418984,10.315659397466339,restaurant,Restaurant 18,food,simulé
-36.886932613265806,10.309470117837614,restaurant,Restaurant 19,food,simulé
-36.88910078587694,10.312452573976483,restaurant,Restaurant 20,food,simulé
-36.885889844056024,10.312931748604013,cafe,Cafe 1,food,simulé
-36.88538923797503,10.316538275789464,cafe,Cafe 2,food,simulé
-36.88667083633811,10.31438905906107,cafe,Cafe 3,food,simulé
-36.88697314910842,10.313148510355626,cafe,Cafe 4,food,simulé
-36.88831533295785,10.3102293365405,cafe,Cafe 5,food,simulé
-36.890730554426405,10.315369716678958,cafe,Cafe 6,food,simulé
-36.89055872183481,10.316412064498465,cafe,Cafe 7,food,simulé
-36.88860769985498,10.316647599588276,cafe,Cafe 8,food,simulé
-36.88569824961592,10.310326247159093,cafe,Cafe 9,food,simulé
-36.88545114294698,10.31145265665242,cafe,Cafe 10,food,simulé
-36.887412737019424,10.3109825659083,cafe,Cafe 11,food,simulé
-36.88992611455927,10.31172630067018,cafe,Cafe 12,food,simulé
-36.88679737059601,10.313345564570577,marketplace,Marketplace 1,food,simulé
-36.88599771025549,10.315605402187199,marketplace,Marketplace 2,food,simulé
-36.88561862152834,10.317213756198692,marketplace,Marketplace 3,food,simulé
-36.88960345966515,10.310350045641073,school,School 1,school,simulé
-36.885224369240625,10.315720914303556,school,School 2,school,simulé
-36.889230003307944,10.314968036022169,school,School 3,school,simulé
-36.88959789430888,10.309264360445162,school,School 4,school,simulé
-36.88724018550064,10.30962858411797,school,School 5,school,simulé
-36.89012239343069,10.314047479407666,school,School 6,school,simulé
-36.88708273421506,10.309173041537633,park,Park 1,park,simulé
-36.88696898687154,10.31145137644154,park,Park 2,park,simulé
-36.88935993191121,10.31417165548355,park,Park 3,park,simulé
-36.89026009234646,10.31273178645428,park,Park 4,park,simulé
+36.8880394,10.3168172,cafe,sahbani,food,osm
+36.8872517,10.3179203,driving_school,Inconnu,other,osm
+36.8866725,10.3163874,cafe,Cafétaria BelHsen,food,osm
+36.8864762,10.3159676,bakery,Le Pain Chaud,food,osm
+36.8865931,10.3158845,cafe,Ben Mehrez,food,osm
+36.8864172,10.3154621,supermarket,عزيزة,food,osm
+36.8895559,10.3131111,marketplace,Souk Bou Selsla,food,osm
+36.8868925,10.3168021,supermarket,Ben Yaghlane La Marsa,food,osm
+36.8891883,10.3136861,marketplace,Souk Bouselsla,food,osm
+36.889836,10.3148413,college,Lycée Marsa El Riadh,school,osm
+36.8902579,10.308822,school,École Farhat Hached,school,osm
+36.8880421,10.316871,park,Inconnu,park,osm
+36.8906932,10.3121521,garden,Inconnu,park,osm
+36.8910378,10.3117636,garden,Inconnu,park,osm
+36.8910099,10.3135851,garden,Inconnu,park,osm
+36.8911653,10.3139958,garden,Inconnu,park,osm
+36.89076,10.3137213,garden,Inconnu,park,osm
+36.8908384,10.3139177,garden,Inconnu,park,osm
+36.8905885,10.3132842,garden,Inconnu,park,osm
+36.8906713,10.3135048,garden,Inconnu,park,osm
+36.8909119,10.3124625,garden,Inconnu,park,osm
+36.8910049,10.3120053,garden,Inconnu,park,osm
+36.8906307,10.3123633,garden,Inconnu,park,osm
+36.890564,10.312584,garden,Inconnu,park,osm
+36.890863,10.3126811,garden,Inconnu,park,osm
+36.8907447,10.3119145,garden,Inconnu,park,osm
+36.8912514,10.3142239,garden,Inconnu,park,osm
+36.8904795,10.3131119,garden,Inconnu,park,osm
+36.8909593,10.3122292,garden,Inconnu,park,osm
+36.8909272,10.3133601,garden,Inconnu,park,osm
+36.8907583,10.311131,garden,Inconnu,park,osm
+36.8910285,10.3112492,garden,Inconnu,park,osm
+36.8908494,10.313168,garden,Inconnu,park,osm
+36.8907739,10.3116727,garden,Inconnu,park,osm
+36.8909271,10.3141174,garden,Inconnu,park,osm
+36.8908342,10.3129261,garden,Inconnu,park,osm
+36.8910277,10.3143771,garden,Inconnu,park,osm
+36.8910505,10.3114795,garden,Inconnu,park,osm
+36.8904542,10.312792,garden,Inconnu,park,osm
+36.8907802,10.3113823,garden,Inconnu,park,osm
+36.891091,10.3137931,garden,Inconnu,park,osm
+36.8909813,10.310999,garden,Inconnu,park,osm
+36.8912606,10.3107927,garden,Inconnu,park,osm
+36.8914009,10.3113239,garden,Inconnu,park,osm
+36.8916073,10.310932,garden,Inconnu,park,osm
+36.8913552,10.3121719,garden,Inconnu,park,osm
+36.8916297,10.3125796,garden,Inconnu,park,osm
+36.891697,10.3112097,garden,Inconnu,park,osm
+36.8912514,10.3127476,garden,Inconnu,park,osm
+36.8916009,10.3128361,garden,Inconnu,park,osm
+36.8915241,10.31066,garden,Inconnu,park,osm
+36.8916028,10.3134113,garden,Inconnu,park,osm
+36.8916689,10.3123109,garden,Inconnu,park,osm
+36.8913952,10.3136034,garden,Inconnu,park,osm
+36.8912897,10.3133337,garden,Inconnu,park,osm
+36.8913306,10.3110552,garden,Inconnu,park,osm
+36.8914883,10.3138967,garden,Inconnu,park,osm
+36.8914287,10.3115873,garden,Inconnu,park,osm
+36.8917196,10.3120278,garden,Inconnu,park,osm
+36.8914016,10.3119185,garden,Inconnu,park,osm
+36.8913028,10.3124549,garden,Inconnu,park,osm
+36.8916794,10.3137056,garden,Inconnu,park,osm
+36.8912324,10.3130681,garden,Inconnu,park,osm
+36.891777,10.3115717,garden,Inconnu,park,osm
+36.8910621,10.3173197,garden,Inconnu,park,osm
+36.8906095,10.3143208,garden,Inconnu,park,osm
+36.8905281,10.3141182,garden,Inconnu,park,osm
+36.8911145,10.3160197,garden,Inconnu,park,osm
+36.8914885,10.3154192,garden,Inconnu,park,osm
+36.890448,10.3139132,garden,Inconnu,park,osm
+36.8912519,10.3148608,garden,Inconnu,park,osm
+36.8915582,10.3156256,garden,Inconnu,park,osm
+36.8914035,10.314513,garden,Inconnu,park,osm
+36.8911915,10.3177994,garden,Inconnu,park,osm
+36.8907529,10.3178516,garden,Inconnu,park,osm
+36.8915298,10.3148413,garden,Inconnu,park,osm
+36.8909714,10.3178336,garden,Inconnu,park,osm
+36.8914083,10.3171698,garden,Inconnu,park,osm
+36.8915063,10.3171133,garden,Inconnu,park,osm
+36.8913701,10.3151369,garden,Inconnu,park,osm
+36.8911819,10.3146659,garden,Inconnu,park,osm
+36.8916443,10.3152108,garden,Inconnu,park,osm
+36.8914588,10.3177797,garden,Inconnu,park,osm
+36.8912948,10.3173235,garden,Inconnu,park,osm
+36.891776,10.3176228,garden,Inconnu,park,osm
+36.8908218,10.3171849,garden,Inconnu,park,osm
+36.890692,10.3145119,garden,Inconnu,park,osm
+36.8917384,10.3101483,garden,Inconnu,park,osm
+36.891753,10.3140007,garden,Inconnu,park,osm
+36.8903848,10.3119666,garden,Inconnu,park,osm
+36.8904255,10.3116762,garden,Inconnu,park,osm
+36.8903064,10.3122315,garden,Inconnu,park,osm
+36.8900958,10.3118594,garden,Inconnu,park,osm
+36.890433,10.3113629,garden,Inconnu,park,osm
+36.8900486,10.3121486,garden,Inconnu,park,osm
+36.8902069,10.3124727,garden,Inconnu,park,osm
+36.8901313,10.3115636,garden,Inconnu,park,osm
+36.8908186,10.3152041,garden,Inconnu,park,osm
+36.8904272,10.3149361,garden,Inconnu,park,osm
+36.8905205,10.3151976,garden,Inconnu,park,osm
+36.8909073,10.3154546,garden,Inconnu,park,osm
+36.8906994,10.3157484,garden,Inconnu,park,osm
+36.890894,10.314864,garden,Inconnu,park,osm
+36.8902425,10.3143564,garden,Inconnu,park,osm
+36.8903381,10.3146109,garden,Inconnu,park,osm
+36.8909887,10.3150933,garden,Inconnu,park,osm
+36.8906092,10.3154609,garden,Inconnu,park,osm
+36.8910723,10.3153689,garden,Inconnu,park,osm
+36.8907753,10.3160588,garden,Inconnu,park,osm
+36.8909866,10.3157076,garden,Inconnu,park,osm
+36.8907335,10.3149377,garden,Inconnu,park,osm
+36.8877382,10.3144677,garden,Inconnu,park,osm
+36.8877577,10.3140175,garden,Inconnu,park,osm
